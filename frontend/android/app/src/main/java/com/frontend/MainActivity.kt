@@ -1,4 +1,4 @@
-package com.frontendnew
+package com.frontend
 
 import android.os.Build
 import android.os.Bundle

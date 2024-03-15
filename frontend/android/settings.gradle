@@ -1,4 +1,4 @@
-rootProject.name = 'rn3'
+rootProject.name = 'frontendnew'
 
 dependencyResolutionManagement {
   versionCatalogs {

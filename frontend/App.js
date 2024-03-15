@@ -25,25 +25,30 @@ const styles = StyleSheet.create({
 
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import axios from 'axios';
 export default function App() {
 
 const [message, setMessage] = useState('');
+const [time, setTime] = useState('');
 
 useEffect(() => {
 
-//axios.get('http://localhost:8000/app1/hello/')
 fetch('http://localhost:8000/app1/hello/')
 	//.then(response => {response.json() ;
 	//.then(json => console.log(json))) ;
 
-.then(response => {
-
-document.write('MY mesg ---> Vandana Agarwal'); //----> THIS WORKS
-//setMessage(response.data.message);
-document.write(response.json());
+.then(response => response.json())
+.then(json => {
+	setMessage(json['message']) ;
+	setTime(json['date']) ;
+	console.log(json) ;
 
 })
+
+//document.write('MY mesg ---> Vandana Agarwal'); //----> THIS WORKS
+//setMessage(response.data.message);
+//document.write(response.json());
+
+//})
 
 .catch(error => {
 
@@ -57,8 +62,13 @@ return (
 
 <View style={styles.container}>
 
+<Text>{time}</Text>
 <Text>{message}</Text>
+<a href="http://localhost:8000/app1/add_creator">ADD new Creator</a>
+<a href="http://localhost:8000/app1/signup_creator">CREATOR SIGNUP</a>
 
+<a href="http://localhost:8000/app1/add_client">ADD new Client</a>
+<a href="http://localhost:8000/app1/signup_client">Client SIGNUP</a>
 </View>
 
 );

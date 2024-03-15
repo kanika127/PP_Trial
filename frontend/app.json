@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "frontend_new",
+    "slug": "frontend_new",
     "version": "1.0.0",
     "assetBundlePatterns": [
       "**/*"

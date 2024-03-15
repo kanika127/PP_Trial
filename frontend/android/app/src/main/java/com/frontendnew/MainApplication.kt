@@ -1,4 +1,4 @@
-package com.rn3
+package com.frontendnew
 
 import android.app.Application
 import android.content.res.Configuration

@@ -1,0 +1,112 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# General
+*.log
+*.env
+*.pyc
+__pycache__/
+db.sqlite3
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Virtual environment
+venv/
+env/
+ENV/
+
+# PyCharm
+.idea/
+
+# SQLite database file (if used)
+*.sqlite3
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django specific
+*.log
+.local/
+staticfiles/
+media/
+
+# Celery beat schedule file
+celerybeat-schedule
+
+# pytest
+.cache
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+
+
+# dependencies
+frontend/node_modules/
+
+# Expo
+frontend/.expo/
+dist/
+web-build/
+
+# Gatsby specific
+.cache/
+public/
+
+# Next.js specific
+.next/
+out/
+
+# Android/iOS
+frontend/android/
+frontend/ios/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# local env files
+.env*.local
+
+# typescript
+*.tsbuildinfo
+
+# Nuxt.js specific
+.nuxt/
+dist/
+
+# VuePress specific
+.vuepress/dist
+
+# Storybook
+storybook-static/
+
+# Dependency directories (commented out if you prefer to keep your lock files)
+package-lock.json
+yarn.lock
+
+# Ignore git itself
+.git/

@@ -19,6 +19,7 @@ from .models import *
 from django.http import JsonResponse
 
 @csrf_exempt
+@csrf_exempt
 def hello(request) :
     print('REQ RECVD ....')
     print('******')

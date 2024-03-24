@@ -7,12 +7,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.exceptions import ValidationError
-from .models import Creator
-from .forms import CreatorForm
+
+from phonenumber_field.phonenumber import to_python
 
 import datetime
 
 from .models import *
+from .forms import CreatorForm
+from .serializers import *
 
 # Create your views here.
 
@@ -21,23 +23,27 @@ from django.http import JsonResponse
 @csrf_exempt
 @csrf_exempt
 def hello(request) :
-    print('REQ RECVD ....')
+    print('REQ RECVD ....', request, type(request))
     print('******')
     tm = str(datetime.datetime.today())
     resp = {'message' : 'HELLO from DJANGO', 'count':10, 'date' : tm}
     return JsonResponse(resp)
 
 def createClient(request) :
-    client = Client(org_name="ORG1", industry='music', address='NYC')
+    email = 'a@aaa.com'
+    mobile = to_python('+919141800')
+    client = MyClient(org_name="OR11", industry='arist1', address='NY1', email=email, mobile=mobile)
+    client.full_clean()
     client.save()
-    client = Client(org_name="ORG2", industry='acting', address='SF')
-    client.save()
+    print('client SAVED')
 
     all_clients = {}
-    for client in Client.objects.all() :
+    for client in MyClient.objects.all() :
         all_clients[client.org_name] = client.industry
         print(client)
-    return JsonResponse(all_clients)
+    ser = SerializerMyClient(client)
+    print(ser)
+    return JsonResponse(ser.data) #all_clients)
 
 def createCreator(request) :
     creator = Creator(name='Nikki', mobile='1111111111', address='San Jose', field='music', pronoun='S')
@@ -75,19 +81,23 @@ class myUser(APIView):
         if action == "signup":
             self.email = request.data.get('email')
             self.password = request.data.get('password')
+            print('########### SIGNUP ->', self.email, self.password) ##
             # Check if the username already exists
             try:
                 if User.objects.filter(email=self.email).exists():
                     raise ValidationError('Username already exists')    
             except ValidationError as e:
                 return JsonResponse({'error': str(e.message)}, status=400)
-            user = User.objects.create_user(username=self.email, email=self.email, password=self.password)
+            #user = User.objects.create_user(username=self.email, email=self.email, password=self.password)
+            user = User(username=self.email, email=self.email, password=self.password)
+            user.full_clean()
             user.save()
+            print(user)
             return Response({"message": "User profile created"}, status=status.HTTP_200_OK)
         elif action == "login":
             self.email = request.data.get('email')
             self.password = request.data.get('password')
-            print(self.email, self.password) ##
+            print('########### LOGIN ->', self.email, self.password) ##
             # Authenticate the user
             user = authenticate(request, username=self.email, password=self.password)
             if user is not None:

@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import User
-from django.http import HttpResponse
+from django.contrib.auth import get_user_model
+# from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,7 +14,7 @@ from phonenumber_field.phonenumber import to_python
 import datetime
 
 from .models import *
-from .forms import CreatorForm
+from .forms import CreatorForm, PassionUserProfileForm
 from .serializers import *
 
 # Create your views here.
@@ -66,34 +67,43 @@ def createCreator(request) :
 
 
 ### TODO: ASK: I should remove email from user.
-class myUser(APIView):
+class PassionViewUser(APIView):
     def __init__(self):
-        print("myuser __int__") ##
+        print("PassionViewUser __int__") ##
         self.email = ""
         self.username = ""
         self.password = ""
         self.is_creator = True
 
     def post(self, request, action):
-        print("in myUser post response") ##
+        print("in PassionViewUser post response") ##
         print(action) ##
 
+        PassionModelUser = get_user_model()
         if action == "signup":
             self.email = request.data.get('email')
             self.password = request.data.get('password')
             print('########### SIGNUP ->', self.email, self.password) ##
             # Check if the username already exists
             try:
-                if User.objects.filter(email=self.email).exists():
+                if PassionModelUser.objects.filter(email=self.email).exists():
                     raise ValidationError('Username already exists')    
             except ValidationError as e:
                 return JsonResponse({'error': str(e.message)}, status=400)
-            #user = User.objects.create_user(username=self.email, email=self.email, password=self.password)
-            user = User(username=self.email, email=self.email, password=self.password)
-            user.full_clean()
+            user = PassionModelUser.objects.create_user(email=self.email, password=self.password)
+            # user = User(username=self.email, email=self.email, password=self.password) -> check again
+            try:
+                user.full_clean()
+                print("cleaned up ")##
+            except ValidationError as e:
+                # Handle validation errors
+                error_message = e.message_dict.get('email', ['An error occurred. Please try again.'])[0]
+                return JsonResponse({'error': error_message}, status=400)
             user.save()
+            print("saved ")##
             print(user)
             return Response({"message": "User profile created"}, status=status.HTTP_200_OK)
+
         elif action == "login":
             self.email = request.data.get('email')
             self.password = request.data.get('password')
@@ -115,7 +125,7 @@ class myUser(APIView):
                     return JsonResponse({'error': str(e.message)}, status=400)
         elif action == "reset_pass":
             self.email = request.data.get('email')
-            user = User.objects.get(username=self.email)
+            user = PassionViewUser.objects.get(username=self.email)
             self.password = request.data.get('password')
             user.set_password(self.password)
             print(self.email, self.password)

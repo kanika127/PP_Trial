@@ -46,6 +46,21 @@ def createClient(request) :
     print('######', ser)
     return JsonResponse(ser.data) #all_clients)
 
+def createApplication(request) :
+    role = Role.objects.filter(role_count=10)
+    print(role[0])
+    mobile = to_python('+919100000333')
+
+    creator = Creator(field=['dance', 'music'], email='kanika@abc.abc', mobile=mobile, sample_work='sample 4', password='pass4', username='user2', pronoun='S', star_rating=4)
+    creator.full_clean()
+    creator.save()
+
+    application = Application(role=role[0], applicant=creator)
+    application.full_clean()
+    application.save()
+    ret = {'status':'ok'}
+    return JsonResponse(ret)
+
 def getRoles(request) :
     ch = DynamicRoleChoices.get_choices()
     print(ch)
@@ -66,7 +81,7 @@ def addRole(request) :
     proj.save()
 
     #role = Role(role_count=1, project=proj, budget=5, role_type='O', other_role_type='this is new role type')
-    role = Role(role_count=10, project=proj, budget=5, role_type='O')
+    role = Role(role_count=10, budget=11, project=proj, role_type='O', other_role_type='a new role')
     role.full_clean()
     role.save()
     ser = RoleSerializer(role)

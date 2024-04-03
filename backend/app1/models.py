@@ -120,7 +120,7 @@ class Project(models.Model) :
         MATCH_SUCCESS = 'MS', 'MatchSuccess'
         NO_MATCHES = 'NM', 'NoMatches'
         COMPLETE = 'C', 'Complete'
-    project_status = models.CharField(max_length=3, choices=Status.choices)
+    project_status = models.CharField(max_length=3, choices=Status.choices, blank=False, default=None)
 
 
 class DynamicRoleChoices :
@@ -144,7 +144,7 @@ class DynamicRoleChoices :
         return cls._choices
 
 class Role(models.Model) :
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', null=False)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', blank=False, default=None)
     role_type = models.CharField(max_length=5, choices=DynamicRoleChoices.get_choices(), default=DynamicRoleChoices._choices[0][0])
     other_role_type = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
     
@@ -155,7 +155,7 @@ class Role(models.Model) :
             raise ValidationError('data not specified for "other" type')
         super().save(*args, **kwargs)
 
-    role_count = models.IntegerField()
+    role_count = models.IntegerField() #default kwargs make it a required field
 
     class CollabTypes(models.TextChoices) :
         PAID = 'P', 'Paid'
@@ -163,7 +163,7 @@ class Role(models.Model) :
         COLLABORATION = 'C', 'Collaboration'
     collab_type = models.CharField(max_length=15, choices=CollabTypes.choices, default=CollabTypes.PAID)
 
-    budget = models.FloatField()
+    budget = models.FloatField() #default kwargs make it a required field
     
     class ExecModes(models.TextChoices) :
         IN_PERSON = 'P', 'in-person'
@@ -171,24 +171,19 @@ class Role(models.Model) :
     exec_mode = models.CharField(max_length=15, choices=ExecModes.choices, default=ExecModes.IN_PERSON)  #, default='virtual')
 
 class Application(models.Model):
-    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications')
-    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications')
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
+    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
     # applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications')
-    status = models.CharField(max_length=100, choices=(('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')))
     submission_date = models.DateTimeField(auto_now_add=True) ## check
     # any other fields relevant to the application
-    class Status(models.TextChoices) :
+
+    class ApplicationStatus(models.TextChoices) :
         PENDING = 'P', 'Pending'
         APPROVED = 'A', 'Approved'
         REJECTED = 'R', 'Rejected'
         OTHER = 'O', 'Other'
-    application_status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
-    other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
+    application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
 
-    def save(self, *args, **kwargs) :
-        if self.application_status != MyClient.Status.OTHER:
-            self.other_status = ''  # Clear the other_status if 'Other' is not selected
-        super().save(*args, **kwargs)
 
 #user = User.objects.get(username='nikki')
 # table1_entry = Creator(first_name='Nikki', user=user)

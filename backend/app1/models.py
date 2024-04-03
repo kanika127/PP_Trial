@@ -10,12 +10,11 @@ from django.conf import settings
 from phonenumber_field.modelfields import PhoneNumberField
 
 from abc import ABC, ABCMeta
+import os
 # Create your models here.
 
 def validate_email(email) :
     r = EmailValidator(email)
-    print('EMAIL validator called')
-    print(r)
     raise ValidationError('inv email addr')
 
 class MyClient(models.Model) :
@@ -25,7 +24,19 @@ class MyClient(models.Model) :
     email = models.EmailField(max_length=50) #, validators=[EmailValidator('inv email')]) NOT REQD ---> JUST DO 'full_clean' before model_obj.save()
     mobile = PhoneNumberField(null=False, blank=False)
 
-
+    class Status(models.TextChoices) :
+        PENDING = 'P', 'Pending'
+        APPROVED = 'A', 'Approved'
+        REJECTED = 'R', 'Rejected'
+        OTHER = 'O', 'Other'
+        #choices = models.ChoicesType(('P', 'Pending'), ('A', 'Approved'), ('R', 'Rejected'), ('O', 'Other'))
+    application_status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
+    
+    def save(self, *args, **kwargs) :
+        if self.application_status != MyClient.Status.OTHER:
+            self.other_status = ''  # Clear the other_status if 'Other' is not selected
+        super().save(*args, **kwargs)
 
 class MyUserManager(BaseUserManager, PolymorphicManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -71,15 +82,7 @@ class Client(PassionUser) :
 
     def __str__(self):
         return self.username
-
     
-# industryTypes = (('arts', 'ARTS'), ('music', 'MUSIC'), ('acting', 'ACTING')) ## check if options or subjective
-def validate_phone_number(value):
-    min_value = 1000000000  # Minimum 10 digit number
-    max_value = 9999999999  # Maximum 10 digit number
-    if not (min_value <= value <= max_value):
-        raise ValidationError(f'{value} is not a valid 10-digit phone number.')
-
 ## TODO: check max_length for all
 ## TODO: remove null from phone and email
 class Creator(PassionUser) :
@@ -98,31 +101,74 @@ class Creator(PassionUser) :
 
 
 ##### TODO: PROJECT FIELDS CHECK
+class SampleWrkTbl(models.Model) :
+    text = models.CharField(max_length=100)
+    link = models.URLField('sample_wrk_link', max_length=128) #, db_index=True, unique=True)
+
 class Project(models.Model) :
     # owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', default=PassionUser.objects.get(username="kanika127@gmail.com")) ## will delete project when user is deleted
-    owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', null=False) ## will delete project when user is deleted
-    title = models.CharField(max_length=100)
-    medium = models.CharField(max_length=100)
-    approx_completion_date = models.DateField()
-    description = models.CharField(max_length=2000)
-    # collab_types = (('P', 'Paid'), ('U', 'Unpaid'), ('C', 'Collaboration')) ## check options
-    # collab_type = models.CharField(max_length=15, choices=collab_types, default='Collaboration')
-    sample_work = models.CharField(max_length=1000) ## check meaning and datatype
-    # role_count = models.IntegerField(_("1")) ## check if its default type
-    role_count = models.IntegerField()
-    # role_type = ## add role types for each role
-    # role_budget = ## add role budgets for ecah role
-    collab_types = (('I', 'In-person'), ('V', 'Virtual'), ('H', 'Hybrid')) ## check Hybrid
-    mode = models.CharField(max_length=10, choices=collab_types, default='Hybrid')
+    owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', blank=False, default=None ) ## will delete project when user is deleted
+    title = models.CharField(max_length=100, blank=False, default=None )
+    medium = models.CharField(max_length=100, blank=False, default=None )
+    approx_completion_date = models.DateField(blank=False, default=None )
+    description = models.CharField(max_length=2000, blank=False, default=None )
+    sample_wrk = models.ForeignKey(SampleWrkTbl, on_delete=models.CASCADE, related_name='sample_work', blank=False, default=None )
+
+    class Status(models.TextChoices) :
+        PENDING = 'P', 'Pending'
+        LIVE = 'L', 'Live'
+        MATCH_SUCCESS = 'MS', 'MatchSuccess'
+        NO_MATCHES = 'NM', 'NoMatches'
+        COMPLETE = 'C', 'Complete'
+    project_status = models.CharField(max_length=3, choices=Status.choices)
+
+
+class DynamicRoleChoices :
+    _choices = []
+    _last_loaded = 0
+    roles_fpath = 'app1/role_choices.cfg'
+    OTHER = None
+
+    @classmethod
+    def load_choices(cls):
+        mod_time = os.path.getmtime(cls.roles_fpath)
+        if mod_time > cls._last_loaded:
+            cls._choices = []
+            cls._choices = [tuple(line.strip().lstrip("'").split(',')) for line in open(cls.roles_fpath)]
+            cls._last_loaded = mod_time
+            cls.OTHER = cls._choices[-1][0]
+
+    @classmethod
+    def get_choices(cls):
+        cls.load_choices()
+        return cls._choices
 
 class Role(models.Model) :
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', null=False)
-    role_type = models.CharField(max_length=50)
-    collab_types = (('P', 'Paid'), ('U', 'Unpaid'), ('C', 'Collaboration')) ## check options
-    collab_type = models.CharField(max_length=15, choices=collab_types, default='Collaboration')
+    role_type = models.CharField(max_length=5, choices=DynamicRoleChoices.get_choices(), default=DynamicRoleChoices._choices[0][0])
+    other_role_type = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
+    
+    def save(self, *args, **kwargs) :
+        if self.role_type != DynamicRoleChoices.OTHER:
+            self.other_role_type = ''  # Clear the other_status if 'Other' is not selected
+        elif self.other_role_type == None :
+            raise ValidationError('data not specified for "other" type')
+        super().save(*args, **kwargs)
+
+    role_count = models.IntegerField()
+
+    class CollabTypes(models.TextChoices) :
+        PAID = 'P', 'Paid'
+        UNPAID = 'U', 'Unpaid'
+        COLLABORATION = 'C', 'Collaboration'
+    collab_type = models.CharField(max_length=15, choices=CollabTypes.choices, default=CollabTypes.PAID)
+
     budget = models.FloatField()
-    exec_modes = (('P', 'in-person'), ('V', 'virtual'))
-    exec_mode = models.CharField(max_length=15, choices=exec_modes)  #, default='virtual')
+    
+    class ExecModes(models.TextChoices) :
+        IN_PERSON = 'P', 'in-person'
+        VIRTUAL = 'V', 'virtual'
+    exec_mode = models.CharField(max_length=15, choices=ExecModes.choices, default=ExecModes.IN_PERSON)  #, default='virtual')
 
 class Application(models.Model):
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications')
@@ -131,17 +177,22 @@ class Application(models.Model):
     status = models.CharField(max_length=100, choices=(('pending', 'Pending'), ('accepted', 'Accepted'), ('rejected', 'Rejected')))
     submission_date = models.DateTimeField(auto_now_add=True) ## check
     # any other fields relevant to the application
+    class Status(models.TextChoices) :
+        PENDING = 'P', 'Pending'
+        APPROVED = 'A', 'Approved'
+        REJECTED = 'R', 'Rejected'
+        OTHER = 'O', 'Other'
+    application_status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
+
+    def save(self, *args, **kwargs) :
+        if self.application_status != MyClient.Status.OTHER:
+            self.other_status = ''  # Clear the other_status if 'Other' is not selected
+        super().save(*args, **kwargs)
 
 #user = User.objects.get(username='nikki')
 # table1_entry = Creator(first_name='Nikki', user=user)
 # table1_entry.save()
-
-
-class tmptable(models.Model) :
-    user = models.CharField(max_length=50) ## check
-    title = models.CharField(max_length=100)
-    medium = models.CharField(max_length=100, blank=False, default=None)
-    org_name = models.CharField(max_length=100, default="")
 
 class Place(models.Model):
     name = models.CharField(max_length=50)

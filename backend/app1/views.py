@@ -31,9 +31,9 @@ def hello(request) :
     return JsonResponse(resp)
 
 def createClient(request) :
-    email = 'a@aaa.com'
-    mobile = to_python('+919141800')
-    client = MyClient(org_name="OR11", industry='arist1', address='NY1', email=email, mobile=mobile)
+    email = 'kanika@xx.com'
+    mobile = to_python('+919100041000')
+    client = MyClient(org_name="ORG_2", industry='actor', address='NY2', email=email, mobile=mobile, application_status='O', other_status='We will revert back on your special status') 
     client.full_clean()
     client.save()
     print('client SAVED')
@@ -41,10 +41,36 @@ def createClient(request) :
     all_clients = {}
     for client in MyClient.objects.all() :
         all_clients[client.org_name] = client.industry
-        print(client)
+        print('******', client)
     ser = SerializerMyClient(client)
-    print(ser)
+    print('######', ser)
     return JsonResponse(ser.data) #all_clients)
+
+def getRoles(request) :
+    ch = DynamicRoleChoices.get_choices()
+    print(ch)
+    roles = {'roles':ch}
+    return JsonResponse(roles)
+
+def addRole(request) :
+    mobile = to_python('+919100000333')
+    cl = Client(industry=['dance', 'music'], email='guneeti@abc.abc', mobile=mobile, sample_work='sample 4', password='pass4', username='user4', org_name='another4 org')
+    cl.full_clean()
+    cl.save()
+
+    sample = SampleWrkTbl(text='text4', link='https://www.geek4.com')
+    sample.save()
+
+    proj = Project(owner=cl, title='proj4', medium='med4', approx_completion_date=datetime.datetime.today(), description='desc134', sample_wrk=sample, project_status='C')
+    proj.full_clean()
+    proj.save()
+
+    #role = Role(role_count=1, project=proj, budget=5, role_type='O', other_role_type='this is new role type')
+    role = Role(role_count=10, project=proj, budget=5, role_type='O')
+    role.full_clean()
+    role.save()
+    ser = RoleSerializer(role)
+    return JsonResponse(ser.data)
 
 def createCreator(request) :
     creator = Creator(name='Nikki', mobile='1111111111', address='San Jose', field='music', pronoun='S')

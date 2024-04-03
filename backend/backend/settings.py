@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "phonenumber_field",
     # "app1.apps.App1Config",
     "app1",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -87,8 +88,8 @@ DATABASES = {
         # "NAME": BASE_DIR / "db.sqlite3",
         "ENGINE": "django.db.backends.postgresql", # mysql",
         "NAME": "Passion_Project",
-        # "USER": "root",
-        "USER": "kanika127@gmail.com",
+        "USER": "root",
+        # "USER": "kanika127@gmail.com",
         "PASSWORD": "passionNSR",
         "HOST": "localhost",
         "PORT": "5432" #"3306"

@@ -3,7 +3,9 @@ from django.contrib import admin
 from .models import *
 # Register your models here.
 
+admin.site.register(BaseUser)
 admin.site.register(PassionUser)
+admin.site.register(SuperUser)
 admin.site.register(Client)
 admin.site.register(Creator)
 admin.site.register(Project)

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 import os
 from pathlib import Path
+from .config import *
 
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -41,9 +42,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "phonenumber_field",
-    # "app1.apps.App1Config",
-    "app1",
     "rest_framework",
+    "app1",
 ]
 
 MIDDLEWARE = [
@@ -62,7 +62,8 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        # "DIRS": [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],  # Make sure this is correctly set
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -96,7 +97,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = "app1.PassionUser"
+AUTH_USER_MODEL = "app1.BaseUser"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

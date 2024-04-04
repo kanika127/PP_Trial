@@ -1,7 +1,6 @@
 # this is app1/urls.py
 
 from django.urls import path
-
 from . import views
 
 urlpatterns = [
@@ -18,4 +17,8 @@ urlpatterns = [
     # path('signup_client/', views.PassionViewUser.as_view()),
     # path('signup_client/', views.signupClient),
     # path('signup_creator/', views.signupCreator),
+    path('check_username/', views.UserRegistrationView.as_view(), {'action': 'check_username'}),
+    path('register/', views.UserRegistrationView.as_view(), {'action': 'register'}, name='register'),
+    path('verify-email/', views.EmailVerifyView.as_view(), name='email-verify'),
+    path('verify_phone_number/', views.UserRegistrationView.verify_phone_number, name='verify_phone_number'),
 ]

@@ -163,11 +163,11 @@ class PassionViewUser(APIView):
             return Response({"message": "User profile created"}, status=status.HTTP_200_OK)
 
         elif action == "login":
-            self.email = request.data.get('email')
+            self.username = request.data.get('username') ## TODO: check if username or email
             self.password = request.data.get('password')
-            print('########### LOGIN ->', self.email, self.password) ##
+            print('########### LOGIN ->', self.username, self.password) ##
             # Authenticate the user
-            user = authenticate(request, username=self.email, password=self.password)
+            user = authenticate(request, username=self.username, password=self.password)
             if user is not None:
                 # If credentials are valid, log the user in
                 login(request, user)
@@ -175,21 +175,60 @@ class PassionViewUser(APIView):
             else:
                 print("Invalid login credentials.") ##
                 try:
-                    if User.objects.filter(email=self.email).exists():
+                    if User.objects.filter(username=self.username).exists():
                         raise ValidationError('Incorrect password.')    
                     else:
                         raise ValidationError('Invalid username.')    
                 except ValidationError as e:
                     return JsonResponse({'error': str(e.message)}, status=400)
         elif action == "reset_pass":
-            self.email = request.data.get('email')
-            # user = PassionViewUser.objects.get(username=self.email) ## mum
-            user = BaseModelUser.objects.get(username=self.email) ## nix
+            self.username = request.data.get('username')
+            user = BaseModelUser.objects.get(username=self.username)
             self.password = request.data.get('password')
             user.set_password(self.password)
-            print(self.email, self.password)
+            print(self.username, self.password)
             user.save()
             return Response({"message": "Your password is updated."}, status=status.HTTP_200_OK)
+
+        elif action == "add_creator_field":
+            self.username = request.data.get('username')
+            BaseModelUser = get_user_model()
+            user = BaseModelUser.objects.get(username=self.username)
+            try:
+                creator = user.creator 
+            except Creator.DoesNotExist:
+                creator = None
+            if creator:
+                # print("Creator found:", creator)
+                creator.field = request.data.get('fields')
+                creator.save()
+                message = "Creator's fields updated successfully."
+                # print("") ##
+                return Response({"message": message}, status=status.HTTP_200_OK)
+            else:
+                error_msg = "No Creator found for this username."
+                print(error_msg)
+                return JsonResponse({'error': error_msg}, status=400)
+
+        elif action == "add_client_industry":
+            self.username = request.data.get('username')
+            BaseModelUser = get_user_model()
+            user = BaseModelUser.objects.get(username=self.username)
+            try:
+                client = user.client 
+            except Client.DoesNotExist:
+                client = None
+            if client:
+                # print("Client found:", client)
+                client.industry = request.data.get('industry')
+                client.save()
+                message = "Client's industry updated successfully."
+                # print("") ##
+                return Response({"message": message}, status=status.HTTP_200_OK)
+            else:
+                error_msg = "No Client found for this username."
+                print(error_msg)
+                return JsonResponse({'error': error_msg}, status=400)
 
         elif action == "set_creator":
             self.is_creator = True
@@ -309,7 +348,7 @@ class UserRegistrationView(APIView):
     def does_email_exist(self, email):
         BaseModelUser = get_user_model()
         try:
-            if BaseModelUser.objects.filter(email=email).exists(): ## TODO: filter based on username
+            if BaseModelUser.objects.filter(email=email).exists(): ## TODO: filter based on email
                 raise ValidationError('Email already exists')    
         except ValidationError as e:
             return (True, e)
@@ -318,7 +357,7 @@ class UserRegistrationView(APIView):
     def does_mobile_exist(self, mobile):
         BaseModelUser = get_user_model()
         try:
-            if BaseModelUser.objects.filter(mobile=mobile).exists(): ## TODO: filter based on username
+            if BaseModelUser.objects.filter(mobile=mobile).exists(): ## TODO: filter based on mobile
                 raise ValidationError('Mobile already exists')    
         except ValidationError as e:
             return (True, e)

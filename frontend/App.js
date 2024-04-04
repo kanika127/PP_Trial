@@ -136,20 +136,59 @@ export default function Example() {
               onPress={() => {
                 // handle onPress
                 setButtonPressed(true); // Set buttonPressed to true when pressed
-                fetch('http://localhost:8000/app1/register/', { // 'signup' / 'login' / 'reset_pass'
+                
+                register_url = 'http://localhost:8000/app1/register/';
+                login_url = 'http://localhost:8000/app1/login/';
+                reset_pass_url = 'http://localhost:8000/app1/reset_pass/';
+                add_creator_field_url = 'http://localhost:8000/app1/add_creator_field/';
+                add_client_industry_url = 'http://localhost:8000/app1/add_client_industry/';
+                
+                register_payload = JSON.stringify({  
+                  first_name: document.getElementById('first_name').value,
+                  last_name: document.getElementById('last_name').value,
+                  email: document.getElementById('email').value,
+                  mobile: document.getElementById('mobile').value,
+                  username: document.getElementById('username').value,
+                  password: document.getElementById('password').value,
+                  role: "Creator", //
+                });
+                
+                login_payload = JSON.stringify({  
+                  // email: document.getElementById('email').value,
+                  // mobile: document.getElementById('mobile').value,
+                  username: document.getElementById('username').value,
+                  password: document.getElementById('password').value,
+                });
+                
+                reset_pass_payload = JSON.stringify({  
+                  // email: document.getElementById('email').value,
+                  // mobile: document.getElementById('mobile').value,
+                  username: document.getElementById('username').value,
+                  password: document.getElementById('password').value,
+                  // old_password: document.getElementById('old_password').value,
+                  // new_password: document.getElementById('new_password').value,
+                });
+                
+                add_creator_field_payload = JSON.stringify({  
+                  username: document.getElementById('username').value, // change this to include session username
+                  fields: ["music", "art", "dance"], //
+                });
+                
+                add_client_industry_payload = JSON.stringify({  
+                  industry: ["music", "art", "dance"], //
+                });
+
+                url = add_creator_field_url
+                payload = add_creator_field_payload
+                // url = register_url
+                // payload = register_payload
+
+                fetch(url, { 
                     method: 'POST',
-                    body: JSON.stringify({  
-                        // username: 'rishi',
-                        first_name: document.getElementById('first_name').value,
-                        last_name: document.getElementById('last_name').value,
-                        email: document.getElementById('email').value,
-                        mobile: document.getElementById('mobile').value,
-                        username: document.getElementById('username').value,
-                        password: document.getElementById('password').value,
-                        role: "Creator",
-                    }),
+                    body: payload,
                     headers: {
                         'Content-Type': 'application/json',
+                        // 'Authorization': `Bearer ${userToken}`
                         // Include any other headers your Django app requires
                     },
                 })

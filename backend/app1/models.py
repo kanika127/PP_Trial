@@ -53,6 +53,16 @@ class EmailVerificationToken(models.Model):
     def __str__(self):
         return f"{self.email} - {self.token}"
 
+class UserSampleWorkTable(models.Model) :
+    def validate_file_extension(value):
+        ext = os.path.splitext(value.name)[1]  # Get the file extension
+        valid_extensions = ['.jpg', '.jpeg', '.png', '.mp4', '.mp3', '.wav']
+        if not ext.lower() in valid_extensions:
+            raise ValidationError('Unsupported file extension.')
+    
+    text = models.CharField(max_length=100)
+    file = models.FileField(upload_to='uploads/', validators=[validate_file_extension])
+
 class MyUserManager(BaseUserManager, PolymorphicManager):
     def create_user(self, username, password=None, **extra_fields):
     # def create_user(self, username, email=email, password=None, **extra_fields):
@@ -100,8 +110,10 @@ class SuperUser(BaseUser) :
 
 class PassionUser(BaseUser) :
     bio = models.TextField(blank=True)
-    sample_work = models.CharField(max_length=5000, null=False, blank=True) 
-    REQUIRED_FIELDS = ['sample_work']
+    # sample_work = models.CharField(max_length=5000, null=False, blank=True) 
+    # sample_work = models.ForeignKey(UserSampleWorkTable, on_delete=models.CASCADE, related_name='user_sample_work', blank=False, default=None)
+    sample_work = models.ForeignKey(UserSampleWorkTable, on_delete=models.CASCADE, related_name='user_sample_work', null=True, default=None)
+    # REQUIRED_FIELDS = ['sample_work']
 
     def __str__(self):
         return self.username
@@ -144,7 +156,7 @@ class PhoneVerification(models.Model):
         # return self.code == submitted_code and timezone.now() < self.expires_at
 
 ##### TODO: PROJECT FIELDS CHECK
-class SampleWrkTbl(models.Model) :
+class ProjectSampleWorkTable(models.Model) :
     text = models.CharField(max_length=100)
     link = models.URLField('sample_wrk_link', max_length=128) #, db_index=True, unique=True)
     # sample_wrk_id = models.CharField(max_length=100, primary_key=True)
@@ -157,14 +169,12 @@ class Project(models.Model) :
         NO_MATCHES = 'NM', 'NoMatches'
         COMPLETE = 'C', 'Complete'
 
-    # owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', default=PassionUser.objects.get(username="kanika127@gmail.com")) ## will delete project when user is deleted
-    owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', blank=False, default=None ) ## mum
-    # owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='pitched_projects', null=False) ## nix
+    owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', blank=False, default=None )
     title = models.CharField(max_length=100, blank=False, default=None )
     medium = models.CharField(max_length=100, blank=False, default=None )
     approx_completion_date = models.DateField(blank=False, default=None )
     description = models.CharField(max_length=2000, blank=False, default=None )
-    sample_wrk = models.ForeignKey(SampleWrkTbl, on_delete=models.CASCADE, related_name='sample_work', blank=False, default=None )
+    sample_wrk = models.ForeignKey(ProjectSampleWorkTable, on_delete=models.CASCADE, related_name='project_sample_work', blank=False, default=None )
     role_count = models.IntegerField(default=1) ## TODO: atleast 1 -> default ## different types of role
     project_status = models.CharField(max_length=3, choices=Status.choices, blank=False, default=None)
 
@@ -199,8 +209,7 @@ class Role(models.Model) :
         IN_PERSON = 'P', 'in-person'
         VIRTUAL = 'V', 'virtual'
 
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', blank=False, default=None) ## mum
-    # project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', null=False) ## nix
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', blank=False, default=None)
     role_type = models.CharField(max_length=5, choices=DynamicRoleChoices.get_choices(), default=DynamicRoleChoices._choices[0][0])
     other_role_type = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
     role_count = models.IntegerField() #default kwargs make it a required field
@@ -220,26 +229,14 @@ class Application(models.Model):
         PENDING = 'P', 'Pending'
         APPROVED = 'A', 'Approved'
         REJECTED = 'R', 'Rejected'
-        # OTHER = 'O', 'Other'
 
-    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None) ## mum
-    # role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications') ## nix
-    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None) ## mum
-    # applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='applications') ## nix
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
+    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
     submission_date = models.DateTimeField(auto_now_add=True) ## check
     # any other fields relevant to the application
     application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
-    # other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
-    
-    # def save(self, *args, **kwargs) :
-    #     if self.application_status != Application.ApplicationStatus.OTHER:
-    #         self.other_status = ''  # Clear the other_status if 'Other' is not selected
-    #     super().save(*args, **kwargs)
+    ques = models.CharField(max_length=1000, blank=True)
 
-
-#user = User.objects.get(username='nikki')
-# table1_entry = Creator(first_name='Nikki', user=user)
-# table1_entry.save()
 
 class Place(models.Model):
     name = models.CharField(max_length=50)

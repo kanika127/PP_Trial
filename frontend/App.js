@@ -178,10 +178,10 @@ export default function Example() {
                   industry: ["music", "art", "dance"], //
                 });
 
-                url = add_creator_field_url
-                payload = add_creator_field_payload
-                // url = register_url
-                // payload = register_payload
+                // url = add_creator_field_url
+                // payload = add_creator_field_payload
+                url = register_url
+                payload = register_payload
 
                 fetch(url, { 
                     method: 'POST',

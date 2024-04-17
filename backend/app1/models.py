@@ -22,27 +22,6 @@ def validate_email(email) :
     r = EmailValidator(email)
     raise ValidationError('inv email addr')
 
-class MyClient(models.Model) :
-    org_name = models.CharField(max_length=50, default="")
-    industry = models.CharField(max_length=50, default="")
-    address = models.CharField(max_length=50, default="")
-    email = models.EmailField(max_length=50) #, validators=[EmailValidator('inv email')]) NOT REQD ---> JUST DO 'full_clean' before model_obj.save()
-    mobile = PhoneNumberField(null=False, blank=False)
-
-    class Status(models.TextChoices) :
-        PENDING = 'P', 'Pending'
-        APPROVED = 'A', 'Approved'
-        REJECTED = 'R', 'Rejected'
-        OTHER = 'O', 'Other'
-        #choices = models.ChoicesType(('P', 'Pending'), ('A', 'Approved'), ('R', 'Rejected'), ('O', 'Other'))
-    application_status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
-    other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
-    
-    def save(self, *args, **kwargs) :
-        if self.application_status != MyClient.Status.OTHER:
-            self.other_status = ''  # Clear the other_status if 'Other' is not selected
-        super().save(*args, **kwargs)
-
 class EmailVerificationToken(models.Model):
     email = models.EmailField()
     token = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -129,6 +108,9 @@ class Client(PassionUser) :
 
     def __str__(self):
         return self.username
+    class Meta :
+        verbose_name = 'Client'
+        verbose_name_plural = 'Clients'
     
 ## TODO: check max_length for all
 ## TODO: remove null from phone and email
@@ -143,6 +125,9 @@ class Creator(PassionUser) :
     def __str__(self):
         return self.username
         # return self.user.username
+    class Meta :
+        verbose_name = 'Creator'
+        verbose_name_plural = 'Creators'
 
 class PhoneVerification(models.Model):
     # mobile = models.CharField(max_length=10, unique=True)
@@ -155,6 +140,7 @@ class PhoneVerification(models.Model):
         return submitted_code == self.code and timezone.now() < self.created_at + timedelta(minutes=5)
         # return self.code == submitted_code and timezone.now() < self.expires_at
 
+############# MUM models start here ######################################
 ##### TODO: PROJECT FIELDS CHECK
 class ProjectSampleWorkTable(models.Model) :
     text = models.CharField(max_length=100)
@@ -175,7 +161,6 @@ class Project(models.Model) :
     approx_completion_date = models.DateField(blank=False, default=None )
     description = models.CharField(max_length=2000, blank=False, default=None )
     sample_wrk = models.ForeignKey(ProjectSampleWorkTable, on_delete=models.CASCADE, related_name='project_sample_work', blank=False, default=None )
-    role_count = models.IntegerField(default=1) ## TODO: atleast 1 -> default ## different types of role
     project_status = models.CharField(max_length=3, choices=Status.choices, blank=False, default=None)
 
 
@@ -231,12 +216,34 @@ class Application(models.Model):
         REJECTED = 'R', 'Rejected'
 
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
-    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
+    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applicant', blank=False, default=None)
     submission_date = models.DateTimeField(auto_now_add=True) ## check
     # any other fields relevant to the application
     application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
-    ques = models.CharField(max_length=1000, blank=True)
+    ques = models.CharField(max_length=1000, blank=True) # what is this ???? ask nikks
 
+############### MUM temp test models
+
+class MyClient(models.Model) :
+    org_name = models.CharField(max_length=50, default="")
+    industry = models.CharField(max_length=50, default="")
+    address = models.CharField(max_length=50, default="")
+    email = models.EmailField(max_length=50) #, validators=[EmailValidator('inv email')]) NOT REQD ---> JUST DO 'full_clean' before model_obj.save()
+    mobile = PhoneNumberField(null=False, blank=False)
+
+    class Status(models.TextChoices) :
+        PENDING = 'P', 'Pending'
+        APPROVED = 'A', 'Approved'
+        REJECTED = 'R', 'Rejected'
+        OTHER = 'O', 'Other'
+        #choices = models.ChoicesType(('P', 'Pending'), ('A', 'Approved'), ('R', 'Rejected'), ('O', 'Other'))
+    application_status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
+    
+    def save(self, *args, **kwargs) :
+        if self.application_status != MyClient.Status.OTHER:
+            self.other_status = ''  # Clear the other_status if 'Other' is not selected
+        super().save(*args, **kwargs)
 
 class Place(models.Model):
     name = models.CharField(max_length=50)

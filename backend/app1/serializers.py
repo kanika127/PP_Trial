@@ -1,23 +1,9 @@
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import *
+from .my_serializers.project_role_serializers import *
+from .my_serializers.temptesting_serializers import *
  
-class SerializerMyClient(serializers.ModelSerializer):
-    class Meta :
-        model = MyClient
-        fields = ['org_name', 'industry', 'address', 'email']
-
-class ClientSerializer(serializers.ModelSerializer):
-    class Meta :
-        model = Client
-        # fields = '__all__'
-        fields = ['email', 'mobile', 'bio', 'sample_work', 'org_name', 'industry', 'password', 'last_login', 'is_superuser', 'username', 'date_joined']
-
-class RoleSerializer(serializers.ModelSerializer):
-    class Meta :
-        model = Role
-        fields = '__all__'
-
 class UserRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField()
     last_name = serializers.CharField()

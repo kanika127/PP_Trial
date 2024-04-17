@@ -14,7 +14,10 @@ import LightBlueTrim from './assets/lightblue-trim.png'
 
 export default function Example() {
   const [form, setForm] = useState({
+    first_name: '',
+    last_name: '',
     email: '',
+    mobile: '',
     password: '',
   });
   const [buttonPressed, setButtonPressed] = useState(false); // State variable for button press
@@ -40,6 +43,36 @@ export default function Example() {
 
           <View style={styles.form}>
             <View style={styles.input}>
+              <Text style={styles.inputLabel}>First Name</Text>
+
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="first-name"
+                onChangeText={first_name => setForm({ ...form, first_name })}
+                // placeholder="rishabh@passionproject.nyc"
+                placeholderTextColor="#6b7280"
+                style={styles.inputControl}
+                value={form.first_name} 
+                id="first_name" />
+            </View>
+
+            <View style={styles.input}>
+              <Text style={styles.inputLabel}>Last Name</Text>
+
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="last-name"
+                onChangeText={last_name => setForm({ ...form, last_name })}
+                // placeholder="rishabh@passionproject.nyc"
+                placeholderTextColor="#6b7280"
+                style={styles.inputControl}
+                value={form.last_name} 
+                id="last_name" />
+            </View>
+
+            <View style={styles.input}>
               <Text style={styles.inputLabel}>Email address</Text>
 
               <TextInput
@@ -47,11 +80,41 @@ export default function Example() {
                 autoCorrect={false}
                 keyboardType="email-address"
                 onChangeText={email => setForm({ ...form, email })}
-                placeholder="rishabh@passionproject.nyc"
+                // placeholder="rishabh@passionproject.nyc"
                 placeholderTextColor="#6b7280"
                 style={styles.inputControl}
                 value={form.email} 
                 id="email" />
+            </View>
+
+            <View style={styles.input}>
+              <Text style={styles.inputLabel}>Mobile Number</Text>
+
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="mobile-number"
+                onChangeText={mobile => setForm({ ...form, mobile })}
+                // placeholder=""
+                placeholderTextColor="#6b7280"
+                style={styles.inputControl}
+                value={form.mobile} 
+                id="mobile" />
+            </View>
+
+            <View style={styles.input}>
+              <Text style={styles.inputLabel}>Username</Text>
+
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="username"
+                onChangeText={username => setForm({ ...form, username })}
+                // placeholder=""
+                placeholderTextColor="#6b7280"
+                style={styles.inputControl}
+                value={form.username} 
+                id="username" />
             </View>
 
             <View style={styles.input}>
@@ -60,7 +123,7 @@ export default function Example() {
               <TextInput
                 autoCorrect={false}
                 onChangeText={password => setForm({ ...form, password })}
-                placeholder="********"
+                // placeholder="********"
                 placeholderTextColor="#6b7280"
                 style={styles.inputControl}
                 secureTextEntry={true}
@@ -73,15 +136,59 @@ export default function Example() {
               onPress={() => {
                 // handle onPress
                 setButtonPressed(true); // Set buttonPressed to true when pressed
-                fetch('http://localhost:8000/app1/signup/', { // 'signup' / 'login' / 'reset_pass'
+                
+                register_url = 'http://localhost:8000/app1/register/';
+                login_url = 'http://localhost:8000/app1/login/';
+                reset_pass_url = 'http://localhost:8000/app1/reset_pass/';
+                add_creator_field_url = 'http://localhost:8000/app1/add_creator_field/';
+                add_client_industry_url = 'http://localhost:8000/app1/add_client_industry/';
+                
+                register_payload = JSON.stringify({  
+                  first_name: document.getElementById('first_name').value,
+                  last_name: document.getElementById('last_name').value,
+                  email: document.getElementById('email').value,
+                  mobile: document.getElementById('mobile').value,
+                  username: document.getElementById('username').value,
+                  password: document.getElementById('password').value,
+                  role: "Creator", //
+                });
+                
+                login_payload = JSON.stringify({  
+                  // email: document.getElementById('email').value,
+                  // mobile: document.getElementById('mobile').value,
+                  username: document.getElementById('username').value,
+                  password: document.getElementById('password').value,
+                });
+                
+                reset_pass_payload = JSON.stringify({  
+                  // email: document.getElementById('email').value,
+                  // mobile: document.getElementById('mobile').value,
+                  username: document.getElementById('username').value,
+                  password: document.getElementById('password').value,
+                  // old_password: document.getElementById('old_password').value,
+                  // new_password: document.getElementById('new_password').value,
+                });
+                
+                add_creator_field_payload = JSON.stringify({  
+                  username: document.getElementById('username').value, // change this to include session username
+                  fields: ["music", "art", "dance"], //
+                });
+                
+                add_client_industry_payload = JSON.stringify({  
+                  industry: ["music", "art", "dance"], //
+                });
+
+                // url = add_creator_field_url
+                // payload = add_creator_field_payload
+                url = register_url
+                payload = register_payload
+
+                fetch(url, { 
                     method: 'POST',
-                    body: JSON.stringify({  
-                        // username: 'rishi',
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value,
-                    }),
+                    body: payload,
                     headers: {
                         'Content-Type': 'application/json',
+                        // 'Authorization': `Bearer ${userToken}`
                         // Include any other headers your Django app requires
                     },
                 })

@@ -25,5 +25,6 @@ urlpatterns = [
     path('add_creator_field/', views.PassionViewUser.as_view(), {'action': 'add_creator_field'}),
     path('add_client_industry/', views.PassionViewUser.as_view(), {'action': 'add_client_industry'}),
 
-    path('add_project/', views.ProjectListCreateAPIView.as_view()),
+    path('projects', views.ProjectListCreateAPIView.as_view()),
+    path('projects/detail/<int:id>', views.Project_Retrieve_Update_Destroy_View.as_view(), name='project-details'),
 ]

@@ -7,9 +7,40 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = '__all__'
 
+class Role_ForListProject_Serializer(serializers.ModelSerializer):
+    class Meta : 
+        model = Role
+        fields = ('role_type', 'collab_type')
+
+class Owner_ForListProject_Serializer(serializers.ModelSerializer):
+    class Meta :
+        model = PassionUser
+        fields = ('username', 'profile_picture')
+
+class SampleWork_ForProjectDetail_Serializer(serializers.ModelSerializer):
+    class Meta :
+        model = ProjectSampleWorkTable
+        fields = ('text', 'link')
+
 class ProjectSampleWorkSerializer(serializers.ModelSerializer):
     class Meta :
         model = ProjectSampleWorkTable
+        fields = '__all__'
+
+class ProjectListSerializer(serializers.ModelSerializer):
+    roles = Role_ForListProject_Serializer(many=True, read_only=True)
+    owner = Owner_ForListProject_Serializer(many=False, read_only=True) 
+
+    class Meta:
+        model = Project
+        fields = ('id', 'title', 'medium', 'owner', 'approx_completion_date', 'roles')
+
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    roles = RoleSerializer(many=True, read_only=True)
+    owner = Owner_ForListProject_Serializer(read_only=True)
+    sample_wrk = SampleWork_ForProjectDetail_Serializer(read_only=True)
+    class Meta :
+        model = Project
         fields = '__all__'
 
 class ProjectSerializer(serializers.ModelSerializer):

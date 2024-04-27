@@ -5,6 +5,7 @@
 *.env
 *.pyc
 */__pycache__/
+backend/profile_pics/
 db.sqlite3
 .DS_Store
 Thumbs.db

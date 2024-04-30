@@ -5,11 +5,11 @@ from . import views
 
 urlpatterns = [
     path('hello/', views.hello),
-    path('add_client/', views.createClient),
-    path('add_creator/', views.createCreator),
-    path('view_roles/', views.getRoles),
-    path('add_role/', views.addRole),
-    path('application/', views.createApplication),
+    #path('add_client/', views.createClient),
+    #path('add_creator/', views.createCreator),
+    #path('view_roles/', views.getRoles),
+    #path('add_role/', views.addRole),
+    #path('application/', views.createApplication),
     # path('signup/', views.PassionViewUser.as_view(), {'action': 'signup'}),
     path('login/', views.PassionViewUser.as_view(), {'action': 'login'}),
     path('reset_pass/', views.PassionViewUser.as_view(), {'action': 'reset_pass'}),
@@ -25,6 +25,8 @@ urlpatterns = [
     path('add_creator_field/', views.PassionViewUser.as_view(), {'action': 'add_creator_field'}),
     path('add_client_industry/', views.PassionViewUser.as_view(), {'action': 'add_client_industry'}),
 
+    # mum
     path('projects', views.ProjectListCreateAPIView.as_view()),
     path('projects/detail/<int:id>', views.Project_Retrieve_Update_Destroy_View.as_view(), name='project-details'),
+    path('applications', views.ApplicationListCreateAPIView.as_view()),
 ]

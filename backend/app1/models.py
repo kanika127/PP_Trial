@@ -149,20 +149,23 @@ class ProjectSampleWorkTable(models.Model) :
 
 class Project(models.Model) :
     class Status(models.TextChoices) :
-        PENDING = 'P', 'Pending'
+        PENDING = 'PG', 'Pending'
         LIVE = 'L', 'Live'
-        MATCH_SUCCESS = 'MS', 'MatchSuccess'
-        NO_MATCHES = 'NM', 'NoMatches'
         COMPLETE = 'C', 'Complete'
+        PAUSE = 'PS', 'Pause'
 
-    owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='pitched_projects', blank=False, default=None )
+    owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='projects', blank=False, default=None )
     title = models.CharField(max_length=100, blank=False, default=None )
     medium = models.CharField(max_length=100, blank=False, default=None )
     approx_completion_date = models.DateField(blank=False, default=None )
     description = models.CharField(max_length=2000, blank=False, default=None )
     sample_wrk = models.ForeignKey(ProjectSampleWorkTable, on_delete=models.CASCADE, related_name='project_sample_work', blank=False, default=None )
-    project_status = models.CharField(max_length=3, choices=Status.choices, blank=False, default=None)
+    project_status = models.CharField(max_length=3, choices=Status.choices, blank=False, default=Status.PENDING)
 
+    class Meta :
+        unique_together = ('owner', 'title')
+
+    def __str__(self) : return self.title
 
 class DynamicRoleChoices :
     _choices = []
@@ -198,9 +201,13 @@ class Role(models.Model) :
     role_type = models.CharField(max_length=5, choices=DynamicRoleChoices.get_choices(), default=DynamicRoleChoices._choices[0][0])
     other_role_type = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
     role_count = models.IntegerField() #default kwargs make it a required field
+    no_of_matches = models.IntegerField(default=0) # to be incremented on match
     collab_type = models.CharField(max_length=15, choices=CollabTypes.choices, default=CollabTypes.PAID)
     budget = models.FloatField() #default kwargs make it a required field
     exec_mode = models.CharField(max_length=15, choices=ExecModes.choices, default=ExecModes.IN_PERSON)  #, default='virtual')
+
+    class Meta :
+        unique_together = ('project', 'role_type')
     
     def save(self, *args, **kwargs) :
         if self.role_type != DynamicRoleChoices.OTHER:
@@ -209,6 +216,14 @@ class Role(models.Model) :
             raise ValidationError('data not specified for "other" type')
         super().save(*args, **kwargs)
 
+    def __str__(self) : return f'{self.role_type=}, {self.project=}'
+
+class MatchedUsers(models.Model):
+    role_id = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='role', blank=False, default=None)
+    owner = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='matched_users', blank=False, default=None )
+    class Meta:
+        unique_together = ('role_id', 'owner')
+
 class Application(models.Model):
     class ApplicationStatus(models.TextChoices) :
         PENDING = 'P', 'Pending'
@@ -216,11 +231,16 @@ class Application(models.Model):
         REJECTED = 'R', 'Rejected'
 
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
-    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applicant', blank=False, default=None)
+    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
     submission_date = models.DateTimeField(auto_now_add=True) ## check
     # any other fields relevant to the application
     application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
-    ques = models.CharField(max_length=1000, blank=True) # what is this ???? ask nikks
+    ques = models.CharField(max_length=1000, blank=True) 
+
+    class Meta :
+        unique_together = ('applicant', 'role')
+
+    def __str__(self) : return f'Application by {self.applicant.username} for role -> {self.role.role_type}'
 
 ############### MUM temp test models
 

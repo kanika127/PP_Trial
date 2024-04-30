@@ -78,19 +78,21 @@ class ProjectSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validated_data):
-        # Remove the username from validated data and use it to find the MyUser instance
+        # Remove the username from validated data and use it to find the BaseUser instance
         username = validated_data.pop('username')
+        validated_data.pop('owner')
         roles_data = validated_data.pop('roles')
         samplewrk = validated_data.pop('sample_wrk')
         samplewrk = ProjectSampleWorkTable.objects.create(**samplewrk)
 
-        user = BaseUser.objects.get(username=username)  # We know the user exists because of validate_username
+        user = BaseUser.objects.get(username=username)  # We know the user exists because of validate
         passion_user = PassionUser.objects.get(username=user)
 
         # Create the Project instance
         project = Project.objects.create(owner=passion_user, sample_wrk=samplewrk, **validated_data)
 
         for role_data in roles_data :
+            role_data.pop('project')
             Role.objects.create(project=project, **role_data)
         return project
 

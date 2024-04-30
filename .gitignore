@@ -4,8 +4,12 @@
 *.log
 *.env
 *.pyc
-*/__pycache__/
+backend/app1/__pycache__/*.pyc
+*/__pycache__/*.pyc
 backend/profile_pics/
+backend/uploads/
+backend/app1/migrations/
+*/migrations/
 db.sqlite3
 .DS_Store
 Thumbs.db

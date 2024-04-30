@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from .models import *
 from .my_serializers.project_role_serializers import *
+from .my_serializers.application_serializers import *
 from .my_serializers.temptesting_serializers import *
  
 class UserRegistrationSerializer(serializers.Serializer):

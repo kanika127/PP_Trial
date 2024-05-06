@@ -7,17 +7,52 @@ class RoleSerializer(serializers.ModelSerializer):
         model = Role
         fields = '__all__'
 
-class Role_ForListProject_Serializer(serializers.ModelSerializer):
+class Role_ListProject_Serializer(serializers.ModelSerializer):
     class Meta : 
         model = Role
         fields = ('role_type', 'collab_type')
 
-class Owner_ForListProject_Serializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.role_type == 'O':
+            data['other_role_type'] = instance.other_role_type
+        return data
+
+class Role_ApplicationSerializer(serializers.ModelSerializer):
+    class Meta :
+        model = Application
+        fields = ('application_status',)
+
+class Role_ProjectDetailOwner_Serializer(serializers.ModelSerializer):
+    applications = Role_ApplicationSerializer(many=True, read_only=True)
+    class Meta : 
+        model = Role
+        fields = [field.name for field in model._meta.fields if field.name!='project'] + ['applications']
+        #exclude = ('project', )
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.role_type != 'O':
+            data.pop('other_role_type', None)
+        return data
+
+class Role_ProjectDetailApplicant_Serializer(serializers.ModelSerializer):
+    class Meta : 
+        model = Role
+        exclude = ('project',) #, 'status_newmatch')
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.role_type != 'O':
+            data.pop('other_role_type', None)
+        return data
+
+class Owner_ListProject_Serializer(serializers.ModelSerializer):
     class Meta :
         model = PassionUser
         fields = ('username', 'profile_picture')
 
-class SampleWork_ForProjectDetail_Serializer(serializers.ModelSerializer):
+class SampleWork_ProjectDetail_Serializer(serializers.ModelSerializer):
     class Meta :
         model = ProjectSampleWorkTable
         fields = ('text', 'link')
@@ -28,17 +63,25 @@ class ProjectSampleWorkSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ProjectListSerializer(serializers.ModelSerializer):
-    roles = Role_ForListProject_Serializer(many=True, read_only=True)
-    owner = Owner_ForListProject_Serializer(many=False, read_only=True) 
+    roles = Role_ListProject_Serializer(many=True, read_only=True)
+    owner = Owner_ListProject_Serializer(many=False, read_only=True) 
 
     class Meta:
         model = Project
         fields = ('id', 'title', 'medium', 'owner', 'approx_completion_date', 'roles')
 
-class ProjectDetailSerializer(serializers.ModelSerializer):
-    roles = RoleSerializer(many=True, read_only=True)
-    owner = Owner_ForListProject_Serializer(read_only=True)
-    sample_wrk = SampleWork_ForProjectDetail_Serializer(read_only=True)
+class ProjectDetailOwnerSerializer(serializers.ModelSerializer):
+    roles = Role_ProjectDetailOwner_Serializer(many=True, read_only=True)
+    owner = Owner_ListProject_Serializer(read_only=True)
+    sample_wrk = SampleWork_ProjectDetail_Serializer(read_only=True)
+    class Meta :
+        model = Project
+        fields = '__all__'
+
+class ProjectDetailApplicantSerializer(serializers.ModelSerializer):
+    roles = Role_ProjectDetailApplicant_Serializer(many=True, read_only=True)
+    owner = Owner_ListProject_Serializer(read_only=True)
+    sample_wrk = SampleWork_ProjectDetail_Serializer(read_only=True)
     class Meta :
         model = Project
         fields = '__all__'
@@ -55,6 +98,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         # depth = 1 
     
     def validate(self, data) :
+        print(data)
         # Retrieve all field names from the model
         model_fields = [field.name for field in self.Meta.model._meta.fields if not field.auto_created]
 

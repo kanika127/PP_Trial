@@ -84,6 +84,8 @@ class BaseUser(AbstractUser, PolymorphicModel) :
 class SuperUser(BaseUser) :
     admin_level = models.CharField(max_length=100, default='standard')
 
+    class Meta :
+        verbose_name = 'Super User'
     def __str__(self):
         return self.username
 
@@ -96,6 +98,9 @@ class PassionUser(BaseUser) :
 
     def __str__(self):
         return self.username
+    class Meta :
+        verbose_name = 'Passion User'
+        verbose_name_plural = 'Passion Users'
     # class Meta :
     #     abstract = True
 
@@ -165,7 +170,7 @@ class Project(models.Model) :
     class Meta :
         unique_together = ('owner', 'title')
 
-    def __str__(self) : return self.title
+    def __str__(self) : return f'{self.title}    BY    {self.owner.username}'
 
 class DynamicRoleChoices :
     _choices = []
@@ -218,17 +223,21 @@ class Role(models.Model) :
 
     def __str__(self) : return f'{self.role_type=}, {self.project=}'
 
+# following may not be required
 class MatchedUsers(models.Model):
     role_id = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='role', blank=False, default=None)
-    owner = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='matched_users', blank=False, default=None )
+    applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='matched_users', blank=False, default=None )
     class Meta:
-        unique_together = ('role_id', 'owner')
+        unique_together = ('role_id', 'applicant')
 
 class Application(models.Model):
     class ApplicationStatus(models.TextChoices) :
-        PENDING = 'P', 'Pending'
+        PENDING = 'PG', 'Pending'
+        SCREENING = 'SC', 'Screening'
         APPROVED = 'A', 'Approved'
         REJECTED = 'R', 'Rejected'
+        PROSPECT = 'PS', 'Prospect'
+        NON_PROSPECT = 'NPS', 'Non-Prospect'
 
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
     applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
@@ -236,11 +245,12 @@ class Application(models.Model):
     # any other fields relevant to the application
     application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
     ques = models.CharField(max_length=1000, blank=True) 
+    match_priority = models.IntegerField(default=-1)
 
     class Meta :
         unique_together = ('applicant', 'role')
 
-    def __str__(self) : return f'Application by {self.applicant.username} for role -> {self.role.role_type}'
+    def __str__(self) : return f'Application by {self.applicant.username} for ROLE ({self.role.role_type}) PROJECT ({self.role.project.title}[{self.role.project.owner.username}])'
 
 ############### MUM temp test models
 

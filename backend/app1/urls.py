@@ -26,7 +26,11 @@ urlpatterns = [
     path('add_client_industry/', views.PassionViewUser.as_view(), {'action': 'add_client_industry'}),
 
     # mum
-    path('projects', views.ProjectListCreateAPIView.as_view()),
-    path('projects/detail/<int:id>', views.Project_Retrieve_Update_Destroy_View.as_view(), name='project-details'),
-    path('applications', views.ApplicationListCreateAPIView.as_view()),
+    path('projects/', views.ProjectListCreateAPIView.as_view()),
+    path('projects/owner/<str:username>/', views.ProjectListByOwnerAPIView.as_view(), name='project-list-by-owner'),
+    path('projects/detail/owner/<int:id>/', views.ProjectOwnerView.as_view(), name='project-details-owner'),
+    path('projects/detail/applicant/<int:id>/', views.ProjectApplicantView.as_view(), name='project-detailsapplicant'),
+    path('projects/search/', views.ProjectSearchView.as_view(), name='project-search'),
+
+    path('applications/', views.ApplicationListCreateAPIView.as_view()),
 ]

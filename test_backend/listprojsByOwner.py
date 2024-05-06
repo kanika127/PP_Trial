@@ -2,7 +2,7 @@ import json
 import requests
 import datetime as dt
 
-url = 'http://127.0.0.1:8000/app1/projects/'
+url = 'http://127.0.0.1:8000/app1/projects/owner/Pradeep/'
 while url :
     r = requests.get(url)
     #r = requests.post('http://localhost:8000/app1/hello/')

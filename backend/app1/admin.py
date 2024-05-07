@@ -40,7 +40,6 @@ class ProjectAdmin(admin.ModelAdmin):
         elif username_q:
             queryset = queryset.filter(username_q)
 
-        print(queryset.query)
         return queryset, use_distinct
 
 admin.site.register(BaseUser)

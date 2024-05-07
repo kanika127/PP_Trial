@@ -30,7 +30,7 @@ urlpatterns = [
     path('projects/owner/<str:username>/', views.ProjectListByOwnerAPIView.as_view(), name='project-list-by-owner'),
     path('projects/detail/owner/<int:id>/', views.ProjectOwnerView.as_view(), name='project-details-owner'),
     path('projects/detail/applicant/<int:id>/', views.ProjectApplicantView.as_view(), name='project-detailsapplicant'),
-    path('projects/search/', views.ProjectSearchView.as_view(), name='project-search'),
+    path('projects/search/', views.ProjectOneSearchView.as_view(), name='project-search'),
 
     path('applications/', views.ApplicationListCreateAPIView.as_view()),
 ]

@@ -54,17 +54,108 @@ class ProjectApplicantView(RetrieveUpdateDestroyAPIView):
 
         #return super().get(request, *args, **kwargs)
 
-class ProjectSearchView(ListAPIView):
+class ProjectOneSearchView(ListAPIView):
+    serializer_class = ProjectListSerializer
+    pagination_class = ProjectPagination
+
+    def get_queryset(self):
+        search_fields = ('title', 'owner__username') # ('field1', 'field2')  # Add the fields you want to enable search for
+        # Split the search term into individual terms
+        search_term = self.request.query_params.get('terms', '')
+        terms = search_term.split(' ')
+
+        queryset = Project.objects.all()
+        #print(queryset)
+
+        # Create a Q object to filter on each term for title, owner__username, medium and role
+        title_q = Q()
+        username_q = Q()
+        medium_q = Q()
+        role_q = Q()
+
+        for term in terms:
+            title_q |= Q(title__icontains=term)
+            username_q |= Q(owner__username__icontains=term)
+            medium_q |= Q(medium__icontains=term)
+
+        #role_q |= Q(roles__role_type__iexact=role)
+
+        # Combine all filters 
+        from itertools import combinations
+        q_objs = ['title_q', 'username_q', 'medium_q', 'role_q']
+        combinations_list = []
+        for i in range(4, 0, -1) :
+            combinations_list += list(combinations(q_objs, i))
+        print(combinations_list)
+        cmd = ''
+        for i, objs in enumerate(combinations_list) :
+            print(objs)
+            expr = ''
+            expr += ' and '.join(objs)
+            print(expr)
+            if i== 0 :
+                cmd = 'if expr :\n'
+            else :
+                cmd = 'elif expr :\n'
+            cmd += '    expr_inner = None\n'
+            cmd += f'    expr_inner = " | ".join({objs})\n'
+            cmd += '    queryset = queryset.filter(expr_inner)\n'
+            cmd += '    print(expr_inner)\n'
+
+        print(cmd)
+        #ABCD
+        if title_q and username_q and medium_q and role_q :
+            queryset = queryset.filter(title_q | username_q | medium_q | role_q)
+        # ABC, ABD, ACD, BCD, 
+        elif title_q and username_q and medium_q :
+            queryset = queryset.filter(title_q | username_q | medium_q)
+        elif title_q and username_q and role_q :
+            queryset = queryset.filter(title_q | username_q | role_q)
+        elif title_q and medium_q and role_q:
+            queryset = queryset.filter(title_q | medium_q | role_q)
+        elif username_q and medium_q and role_q :
+            queryset = queryset.filter(username_q | medium_q | role_q)
+        # AB, AC, AD, BC, BD, CD
+        elif title_q and username_q :
+            queryset = queryset.filter(title_q | username_q)
+        elif title_q and medium_q :
+            queryset = queryset.filter(title_q | medium_q)
+        elif title_q and role_q :
+            queryset = queryset.filter(title_q | role_q)
+        elif username_q and medium_q :
+            queryset = queryset.filter(username_q | medium_q)
+        elif username_q and role_q :
+            queryset = queryset.filter(username_q | role_q)
+        elif medium_q and role_q :
+            queryset = queryset.filter(medium_q | role_q)
+        # A, B, C, D
+        elif title_q:
+            queryset = queryset.filter(title_q)
+        elif username_q:
+            queryset = queryset.filter(username_q)
+
+        print(queryset)
+        print(queryset.query)
+
+        return queryset
+
+# Following SEARCH function assumes that there are 4 separate search bars (one for each category
+# This assumes that api could be invoked as :-
+#       http://127.0.0.1:8000/app1/projects/search/?owner=kanika&role=dj
+#       http://127.0.0.1:8000/app1/projects/search/?owner=kanika&title=p
+# This is not used presently
+# Can be removed later if not required
+class ProjectMultiSearchView(ListAPIView):
     serializer_class = ProjectListSerializer
     pagination_class = ProjectPagination
 
     def get_queryset(self):
         queryset = Project.objects.all()
         print(queryset)
-        title = self.request.query_params.get('title', None)
-        medium = self.request.query_params.get('medium', None)
-        owner_username = self.request.query_params.get('owner', None)
-        role = self.request.query_params.get('role', None)
+        title = self.request.query_params.get('title', '')
+        medium = self.request.query_params.get('medium', '')
+        owner_username = self.request.query_params.get('owner', '')
+        role = self.request.query_params.get('role', '')
 
         title_q = Q()
         medium_q = Q()

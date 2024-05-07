@@ -2,10 +2,16 @@ import json
 import requests
 import datetime as dt
 
-terms = input('Enter search terms/(press enter for None) :: ').replace(' ', '%20').replace('#', '%23')
+owner = input('Enter owner/(press enter for None) :: ').replace(' ', '%20').replace('#', '%23')
+medium = input('Enter medium/(press enter for None) :: ').replace(' ', '%20').replace('#', '%23')
+title = input('Enter title/(press enter for None) :: ').replace(' ', '%20').replace('#', '%23')
+role = input('Enter role/(press enter for None) :: ')
 
 url = 'http://127.0.0.1:8000/app1/projects/search/?'
-if terms : url += f'terms={terms}&'
+if owner : url += f'owner={owner}&'
+if title : url += f'title={title}&'
+if medium : url += f'medium={medium}&'
+if role : url += f'role={role}&'
 print(url)
 
 while url :

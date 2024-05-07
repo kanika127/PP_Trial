@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "phonenumber_field",
     "rest_framework",
+    #'rest_framework.authtoken',
     "app1",
 ]
 
@@ -78,6 +79,18 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+   'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+   'PAGE_SIZE': 10
+}
+
+AUTHENTICATION_BACKENDS = [
+    'app1.authentication.EmailOrUsernameModelBackend',  # Use your custom backend first
+    'django.contrib.auth.backends.ModelBackend',  # Fallback to the default if needed
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
@@ -99,10 +112,10 @@ DATABASES = {
 
 AUTH_USER_MODEL = "app1.BaseUser"
 
-REST_FRAMEWORK = {
-   'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-   'PAGE_SIZE': 10
-}
+#REST_FRAMEWORK = {
+   #'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+   #'PAGE_SIZE': 10
+#}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

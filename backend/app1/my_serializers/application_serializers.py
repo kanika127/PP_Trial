@@ -1,19 +1,25 @@
-
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from app1.models import *
- 
+
+class ApplicationQuestionSerializer(serializers.ModelSerializer) :
+    class Meta :
+        model = ApplicationQuestion
+        fields = '__all__'
+
 class ApplicationSerializer(serializers.ModelSerializer):
     username = serializers.CharField(write_only=True)  # Accept username, but don't include it in the serialized output
+    ques_1_content = ApplicationQuestionSerializer()
+    ques_2_content = ApplicationQuestionSerializer()
+    ques_3_content = ApplicationQuestionSerializer()
 
     class Meta :
         model = Application
         fields = '__all__'
-    
+
     def validate(self, data) :
         required_fields = ['role', 'username']
-        
-        #missing_fields = [field for field in required_fields if field not in data]
+
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             raise serializers.ValidationError({field: "This field is required." for field in missing_fields})
@@ -28,11 +34,36 @@ class ApplicationSerializer(serializers.ModelSerializer):
         username = validated_data.pop('username')
         validated_data.pop('applicant')
         validated_data.pop('application_status')
+        q1_data = validated_data.pop('ques_1_content')
+        q2_data = validated_data.pop('ques_2_content')
+        q3_data = validated_data.pop('ques_3_content')
         creator = Creator.objects.get(username=username)  # We know the user exists because of validate
+        print("in create application")
 
-        # Create the Application instance
-        application = Application.objects.create(applicant=creator, **validated_data)
+        # Create the ApplicationQuestions instances
+        print("before creating application questions")
+        q1 = ApplicationQuestion.objects.create(**q1_data)
+        q2 = ApplicationQuestion.objects.create(**q2_data)
+        q3 = ApplicationQuestion.objects.create(**q3_data)
+
+        # Create Application instance
+        print("before creating application")
+        application = Application.objects.create(applicant=creator, ques_1_content=q1, ques_2_content=q2, ques_3_content=q3, **validated_data)
+        print("after creating application", application)
+
         return application
+    
+    def withdraw(self, application_id):
+        ## TODO: remove application entry
+        ## TODO: Add URL as well and put in views
+        try:
+            application = Application.objects.get(pk=application_id)
+            application.delete()
+            return JsonResponse({'message': 'Application deleted successfully'}, status=204)
+        except Application.DoesNotExist:
+            return JsonResponse({'error': 'Application not found'}, status=404)
+
+        return
 
     #def update(self, instance, validated_data):
         #roles_data = validated_data.pop('roles', [])

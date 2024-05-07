@@ -99,6 +99,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     
     def validate(self, data) :
         print(data)
+        print("in validate projetc serializer ---> 1") ####
         # Retrieve all field names from the model
         model_fields = [field.name for field in self.Meta.model._meta.fields if not field.auto_created]
 
@@ -119,6 +120,7 @@ class ProjectSerializer(serializers.ModelSerializer):
             if role['role_type'] == 'O' and not role.get('other_role_type'):
                 raise serializers.ValidationError({'role_type' : "Please provide 'other_role_type' for roles where 'role_type' is 'other'."})
 
+        print('data returned by validate --->', data)
         return data
 
     def create(self, validated_data):
@@ -128,16 +130,22 @@ class ProjectSerializer(serializers.ModelSerializer):
         roles_data = validated_data.pop('roles')
         samplewrk = validated_data.pop('sample_wrk')
         samplewrk = ProjectSampleWorkTable.objects.create(**samplewrk)
+        print('create func ---> 1')
 
         user = BaseUser.objects.get(username=username)  # We know the user exists because of validate
         passion_user = PassionUser.objects.get(username=user)
+        print('create func ---> 2')
 
         # Create the Project instance
         project = Project.objects.create(owner=passion_user, sample_wrk=samplewrk, **validated_data)
+        print('create func ---> 3')
 
+        # print(roles_data)
         for role_data in roles_data :
             role_data.pop('project')
             Role.objects.create(project=project, **role_data)
+            print('create func ---> 4')
+        print('project created --->', project)
         return project
 
     #def update(self, instance, validated_data):

@@ -2,11 +2,41 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.exceptions import NotFound
 from rest_framework import serializers
+from rest_framework import status
 
 from django.db.models import Q
+from django.http import JsonResponse
 
 from app1.models import Project
 from app1.serializers import *
+
+# class ProjectCreateView(CreateAPIView):
+#     queryset = Project.objects.all()
+#     serializer_class = ProjectSerializer
+    
+#class ProjectCreateAPIView(CreateAPIView):
+    #queryset = Project.objects.all()
+    #serializer_class = ProjectSerializer
+    # permission_classes = [IsAuthenticated] ### Temporarily commented
+
+    #def __init__(self):
+        #print ("in Project create view")
+
+    #def post(self, request, *args, **kwargs):
+        #print("Received data:", request.data)  # Debugging: Check what data is received
+        #serializer = self.get_serializer(data=request.data)
+        ##print("1") ##
+        ## # if serializer.is_valid(raise_exception=True):
+        ##     # print("2") ##
+        ## else:
+        ##     print("invalid serializer")
+        ##     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        ## self.perform_create(serializer)
+        ## print("3") ##
+        ## headers = self.get_success_headers(serializer.data)
+        ## print("4") ##
+        ## return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        #return JsonResponse({"message": "Project created."}, status=status.HTTP_200_OK)
 
 class ProjectPagination(LimitOffsetPagination):
     default_limit = 10
@@ -18,8 +48,11 @@ class ProjectListCreateAPIView(ListCreateAPIView):
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
-            return ProjectListSerializer
-        return ProjectSerializer
+            ser_class =  ProjectListSerializer
+        else :
+            ser_class = ProjectSerializer
+        print(ser_class)
+        return ser_class
 
 class ProjectListByOwnerAPIView(ListAPIView):
     serializer_class = ProjectListSerializer
@@ -44,16 +77,6 @@ class ProjectApplicantView(RetrieveUpdateDestroyAPIView):
     serializer_class = ProjectDetailApplicantSerializer
     lookup_field = 'id' # by default looks up for 'pk'
 
-    #def get(self, request, *args, **kwargs):
-        #project_id = kwargs.get('id')
-        #username = kwargs.get('username')
-
-        ## Check if the project ID and username exist in the Client table
-        #if not PassionUser.objects.filter(username=username, projects__id=project_id).exists():
-            #raise NotFound("Project not found for the specified username.")
-
-        #return super().get(request, *args, **kwargs)
-
 class ProjectOneSearchView(ListAPIView):
     serializer_class = ProjectListSerializer
     pagination_class = ProjectPagination
@@ -65,7 +88,6 @@ class ProjectOneSearchView(ListAPIView):
         terms = search_term.split(' ')
 
         queryset = Project.objects.all()
-        #print(queryset)
 
         # Create a Q object to filter on each term for title, owner__username, medium and role
         title_q = Q()

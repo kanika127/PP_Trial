@@ -19,6 +19,7 @@ export default function Example() {
     email: '',
     mobile: '',
     password: '',
+    code: '',
   });
   const [buttonPressed, setButtonPressed] = useState(false); // State variable for button press
   return (
@@ -42,6 +43,21 @@ export default function Example() {
           </View>
 
           <View style={styles.form}>
+          <View style={styles.input}>
+              <Text style={styles.inputLabel}>Organization Name</Text>
+
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="organization-name"
+                onChangeText={organization_name => setForm({ ...form, organization_name })}
+                // placeholder="rishabh@passionproject.nyc"
+                placeholderTextColor="#6b7280"
+                style={styles.inputControl}
+                value={form.organization_name} 
+                id="organization_name" />
+            </View>
+
             <View style={styles.input}>
               <Text style={styles.inputLabel}>First Name</Text>
 
@@ -131,6 +147,21 @@ export default function Example() {
                 id="password" />
             </View>
 
+            <View style={styles.input}>
+              <Text style={styles.inputLabel}>Code</Text>
+
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="code"
+                onChangeText={code => setForm({ ...form, code })}
+                // placeholder=""
+                placeholderTextColor="#6b7280"
+                style={styles.inputControl}
+                value={form.code} 
+                id="code" />
+            </View>
+
             <View style={styles.formAction}>
             <TouchableOpacity
               onPress={() => {
@@ -138,19 +169,25 @@ export default function Example() {
                 setButtonPressed(true); // Set buttonPressed to true when pressed
                 
                 register_url = 'http://localhost:8000/app1/register/';
+                email_verify_url = 'http://localhost:8000/app1/email_verify/';
                 login_url = 'http://localhost:8000/app1/login/';
                 reset_pass_url = 'http://localhost:8000/app1/reset_pass/';
                 add_creator_field_url = 'http://localhost:8000/app1/add_creator_field/';
                 add_client_industry_url = 'http://localhost:8000/app1/add_client_industry/';
                 
                 register_payload = JSON.stringify({  
+                  organization_name: document.getElementById('organization_name').value,
                   first_name: document.getElementById('first_name').value,
                   last_name: document.getElementById('last_name').value,
                   email: document.getElementById('email').value,
                   mobile: document.getElementById('mobile').value,
                   username: document.getElementById('username').value,
                   password: document.getElementById('password').value,
-                  role: "Creator", //
+                  role: "Client", //
+                });
+                
+                email_verify_payload = JSON.stringify({  
+                  code: document.getElementById('code').value,
                 });
                 
                 login_payload = JSON.stringify({  
@@ -171,17 +208,26 @@ export default function Example() {
                 
                 add_creator_field_payload = JSON.stringify({  
                   username: document.getElementById('username').value, // change this to include session username
-                  fields: ["music", "art", "dance"], //
+                  fields: ["music", "art", "dance", "other"], //
+                  other: "abc"
                 });
                 
                 add_client_industry_payload = JSON.stringify({  
-                  industry: ["music", "art", "dance"], //
+                  username: document.getElementById('username').value, // change this to include session username
+                  industry: ["music", "art", "dance", "other"], //
+                  other: ["literature"], //
                 });
 
                 // url = add_creator_field_url
                 // payload = add_creator_field_payload
-                url = register_url
-                payload = register_payload
+                // url = add_client_industry_url
+                // payload = add_client_industry_payload
+                // url = register_url
+                // payload = register_payload
+                url = email_verify_url
+                payload = email_verify_payload
+                // url = login_url
+                // payload = login_payload
 
                 fetch(url, { 
                     method: 'POST',
@@ -223,6 +269,7 @@ export default function Example() {
             </View>
             <Text style={styles.formLink}>Forgot password?</Text>
           </View>
+
         </KeyboardAwareScrollView>
 
         <TouchableOpacity

@@ -3,10 +3,12 @@ import requests
 import datetime as dt
 
 data = {
-    "username": "Guneeti",
-    "role": 12,
-    "ques" : "my query",
-    "application_status":"A"
+    "username": "Nitish",
+    "role": 19,
+    "application_status":"A",
+    "ques_1_content" : {'text' : 'my query1'},
+    "ques_2_content" : {'text' : 'my query2'},
+    "ques_3_content" : {'text' : 'my query3'},
 }
 
  

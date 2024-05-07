@@ -4,7 +4,7 @@ from .models import PassionUser, Creator, Client
 class PassionUserProfileForm(forms.ModelForm):
     class Meta:
         model = PassionUser
-        fields = ['mobile', 'profile_picture', 'bio', 'sample_work']  # Fields to be updated in the user profile
+        fields = ['mobile', 'profile_picture', 'bio', 'sample_work_1', 'sample_work_2', 'sample_work_3']  # Fields to be updated in the user profile
 
     def clean_mobile(self):
         mobile = self.cleaned_data['mobile']

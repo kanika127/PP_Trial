@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "phonenumber_field",
     "rest_framework",
+    'rest_framework.authtoken',
     "app1",
 ]
 
@@ -78,6 +79,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    'app1.authentication.EmailOrUsernameModelBackend',  # Use your custom backend first
+    'django.contrib.auth.backends.ModelBackend',  # Fallback to the default if needed
+]
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases

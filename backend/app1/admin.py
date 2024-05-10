@@ -12,7 +12,8 @@ class CustomUserAdmin(admin.ModelAdmin):
 class ProjectAdmin(admin.ModelAdmin):
     search_fields = ('title', 'owner__username') # ('field1', 'field2')  # Add the fields you want to enable search for
     def get_search_results(self, request, queryset, search_term):
-        queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        #queryset, use_distinct = super().get_search_results(request, queryset, search_term)
+        queryset = Project.objects.all()
 
         # Split the search term into individual terms
         terms = search_term.split(' ')
@@ -40,7 +41,8 @@ class ProjectAdmin(admin.ModelAdmin):
         elif username_q:
             queryset = queryset.filter(username_q)
 
-        return queryset, use_distinct
+        return queryset, False #use_distinct
+
 
 admin.site.register(BaseUser)
 admin.site.register(PassionUser)
@@ -50,7 +52,7 @@ admin.site.register(Creator)
 admin.site.register(UserSampleWorkTable)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Role)
-admin.site.register(RoleQuestions)
+admin.site.register(RoleQuestion)
 admin.site.register(Application)
 admin.site.register(ApplicationQuestion)
 admin.site.register(ProjectSampleWorkTable)

@@ -2,7 +2,16 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from app1.models import *
  
+class RoleQuestionSerializer(serializers.ModelSerializer):
+    class Meta :
+        model = RoleQuestion
+        fields = '__all__'
+
 class RoleSerializer(serializers.ModelSerializer):
+    question_1 = RoleQuestionSerializer()
+    question_2 = RoleQuestionSerializer()
+    question_3 = RoleQuestionSerializer()
+
     class Meta :
         model = Role
         fields = '__all__'
@@ -98,8 +107,6 @@ class ProjectSerializer(serializers.ModelSerializer):
         # depth = 1 
     
     def validate(self, data) :
-        print(data)
-        print("in validate projetc serializer ---> 1") ####
         # Retrieve all field names from the model
         model_fields = [field.name for field in self.Meta.model._meta.fields if not field.auto_created]
 
@@ -130,22 +137,30 @@ class ProjectSerializer(serializers.ModelSerializer):
         roles_data = validated_data.pop('roles')
         samplewrk = validated_data.pop('sample_wrk')
         samplewrk = ProjectSampleWorkTable.objects.create(**samplewrk)
-        print('create func ---> 1')
-
         user = BaseUser.objects.get(username=username)  # We know the user exists because of validate
         passion_user = PassionUser.objects.get(username=user)
-        print('create func ---> 2')
 
         # Create the Project instance
         project = Project.objects.create(owner=passion_user, sample_wrk=samplewrk, **validated_data)
-        print('create func ---> 3')
+        print('project created')
+        print('======================')
+        print()
 
         # print(roles_data)
         for role_data in roles_data :
             role_data.pop('project')
-            Role.objects.create(project=project, **role_data)
-            print('create func ---> 4')
-        print('project created --->', project)
+            
+            # get question data
+            question_1_data = role_data.pop('question_1')
+            question_2_data = role_data.pop('question_2')
+            question_3_data = role_data.pop('question_3')
+            q1 = RoleQuestion.objects.create(**question_1_data)
+            q2 = RoleQuestion.objects.create(**question_2_data)
+            q3 = RoleQuestion.objects.create(**question_3_data)
+
+            # create role now
+            role = Role.objects.create(project=project, question_1=q1, question_2=q2, question_3=q3, **role_data)
+
         return project
 
     #def update(self, instance, validated_data):

@@ -10,17 +10,19 @@ from app1.serializers import *
 
 class ApplicationListCreateAPIView(ListCreateAPIView):
     #queryset = Application.objects.all()
-    #serializer_class = ApplicationSerializer
+    serializer_class = ApplicationSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = ApplicationSerializer(data=request.data)
+        #serializer = ApplicationSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         print("Received data:", request.data)  # Debugging: Check what data is received
         print("1") ##
 
         if serializer.is_valid() :
+            print('aft validation')
             data = serializer.validated_data
+            print('data aft is_valid -->', data)
             application = serializer.save()
-        print(data)
         self.send_verification_email(data, request)
         return JsonResponse({"message": "Application created and email sent for screening. Please check your messages."})
 

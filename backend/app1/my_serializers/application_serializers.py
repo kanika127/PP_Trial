@@ -33,7 +33,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         # Remove the username from validated data and use it to find the Creator instance
         username = validated_data.pop('username')
         validated_data.pop('applicant')
-        validated_data.pop('application_status')
+        validated_data.pop('application_status') # popped : because application must always be created with default status 'Pending' 
         q1_data = validated_data.pop('ques_1_content')
         q2_data = validated_data.pop('ques_2_content')
         q3_data = validated_data.pop('ques_3_content')
@@ -55,7 +55,6 @@ class ApplicationSerializer(serializers.ModelSerializer):
     
     def withdraw(self, application_id):
         ## TODO: remove application entry
-        ## TODO: Add URL as well and put in views
         try:
             application = Application.objects.get(pk=application_id)
             application.delete()

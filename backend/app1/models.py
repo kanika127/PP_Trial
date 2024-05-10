@@ -18,10 +18,6 @@ from abc import ABC, ABCMeta
 import os
 # Create your models here.
 
-def validate_email(email) :
-    r = EmailValidator(email)
-    raise ValidationError('invalid email address.')
-
 class EmailVerificationToken(models.Model):
     email = models.EmailField()
     token = models.UUIDField(default=uuid.uuid4, editable=False)
@@ -219,18 +215,24 @@ class DynamicRoleChoices :
     @classmethod
     def get_choices(cls):
         cls.load_choices()
+        #print(cls._choices)
         return cls._choices
 
-class RoleQuestions(models.Model) :
+ROLE_CHOICES = DynamicRoleChoices.get_choices()
+
+class RoleQuestion(models.Model) :
     class Status(models.TextChoices) :
         IMAGE = 'I', 'Image'
         VIDEO = 'V', 'Video'
         FILE = 'F', 'File'
         TEXTBOX = 'T', 'Textbox'
 
-    prompt = models.CharField(max_length=100)
+    prompt = models.CharField(max_length=100, blank=True)
     guidelines = models.CharField(max_length=2000, blank=True, null=True)
     content_type = models.CharField(max_length=5, choices=Status.choices, default=Status.TEXTBOX)
+
+    def __str__(self) :
+        return f'{self.prompt}'
 
 class Role(models.Model) :
     class CollabTypes(models.TextChoices) :
@@ -243,7 +245,7 @@ class Role(models.Model) :
         VIRTUAL = 'V', 'virtual'
     
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', blank=False, default=None)
-    role_type = models.CharField(max_length=5, choices=DynamicRoleChoices.get_choices(), default=DynamicRoleChoices._choices[0][0])
+    role_type = models.CharField(max_length=5, choices=ROLE_CHOICES, default=ROLE_CHOICES[0][0])
     other_role_type = models.CharField(max_length=100, blank=True, null=True) # extra field to save data if 'status' is 'other'
     role_count = models.IntegerField(default = 1, validators=[MinValueValidator(1), MaxValueValidator(10)]) #default kwargs make it a required field
     no_of_matches = models.IntegerField(default=0) # to be incremented on match and decremented if someone leaves
@@ -251,9 +253,9 @@ class Role(models.Model) :
     budget = models.FloatField(default = 0) 
     budget_visibility = models.BooleanField(default = False) 
     exec_mode = models.CharField(max_length=15, choices=ExecModes.choices, default=ExecModes.IN_PERSON)  #, default='virtual')
-    question_1 = models.ForeignKey(RoleQuestions, on_delete=models.CASCADE, related_name='role_question_1', null=True, default=None)
-    question_2 = models.ForeignKey(RoleQuestions, on_delete=models.CASCADE, related_name='role_question_2', null=True, default=None)
-    question_3 = models.ForeignKey(RoleQuestions, on_delete=models.CASCADE, related_name='role_question_3', null=True, default=None)
+    question_1 = models.ForeignKey(RoleQuestion, on_delete=models.CASCADE, related_name='role_question_1', null=True, default=None)
+    question_2 = models.ForeignKey(RoleQuestion, on_delete=models.CASCADE, related_name='role_question_2', null=True, default=None)
+    question_3 = models.ForeignKey(RoleQuestion, on_delete=models.CASCADE, related_name='role_question_3', null=True, default=None)
     
 
     class Meta :
@@ -284,12 +286,6 @@ class Role(models.Model) :
 
     def __str__(self) : return f'{self.role_type=}, {self.project=}'
 
-class MatchedUsers(models.Model):
-    role_id = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='role', blank=False, default=None)
-    owner = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='matched_users', blank=False, default=None )
-    class Meta:
-        unique_together = ('role_id', 'owner')
-
 class ApplicationQuestion(models.Model) :
     def validate_file_extension(value):
         ext = os.path.splitext(value.name)[1]  # Get the file extension
@@ -303,19 +299,17 @@ class ApplicationQuestion(models.Model) :
 class Application(models.Model):
     class ApplicationStatus(models.TextChoices) :
         PENDING = 'P', 'Pending'
-        SCREENING = 'S', 'Screening'
         PROSPECT = 'PUR', 'Prospect - Under Review'
-        NOT_PROSPECT = 'NPUR', 'Not Prospect - Under Review'
         APPROVED = 'A', 'Approved'
         REJECTED = 'R', 'Rejected'
-        #PROSPECT = 'PS', 'Prospect'
         NON_PROSPECT = 'NPS', 'Non-Prospect'
+        SCREENING = 'S', 'Screening'
 
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
     applicant = models.ForeignKey(Creator, on_delete=models.CASCADE, related_name='applications', blank=False, default=None)
     submission_date = models.DateTimeField(auto_now_add=True) ## check
     # any other fields relevant to the application
-    application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING)
+    application_status = models.CharField(max_length=10, choices=ApplicationStatus.choices, default=ApplicationStatus.PENDING) # ignores data sent by user
     ques_1_content = models.ForeignKey(ApplicationQuestion, on_delete=models.CASCADE, related_name='application_content_1', null=True, default=None)
     ques_2_content = models.ForeignKey(ApplicationQuestion, on_delete=models.CASCADE, related_name='application_content_2', null=True, default=None)
     ques_3_content = models.ForeignKey(ApplicationQuestion, on_delete=models.CASCADE, related_name='application_content_3', null=True, default=None)

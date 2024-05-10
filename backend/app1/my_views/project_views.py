@@ -7,7 +7,7 @@ from rest_framework import status
 from django.db.models import Q
 from django.http import JsonResponse
 
-from app1.models import Project
+from app1.models import Project, ROLE_CHOICES
 from app1.serializers import *
 
 # class ProjectCreateView(CreateAPIView):
@@ -51,7 +51,6 @@ class ProjectListCreateAPIView(ListCreateAPIView):
             ser_class =  ProjectListSerializer
         else :
             ser_class = ProjectSerializer
-        print(ser_class)
         return ser_class
 
 class ProjectListByOwnerAPIView(ListAPIView):
@@ -94,72 +93,90 @@ class ProjectOneSearchView(ListAPIView):
         username_q = Q()
         medium_q = Q()
         role_q = Q()
-
         for term in terms:
             title_q |= Q(title__icontains=term)
             username_q |= Q(owner__username__icontains=term)
             medium_q |= Q(medium__icontains=term)
-
-        #role_q |= Q(roles__role_type__iexact=role)
+            for ch1, ch2 in ROLE_CHOICES :
+                if ch2.upper() == term.upper() : # introduce tokenizer here
+                    role_q |= Q(roles__role_type__iexact=ch1)
+                    break
+            
 
         # Combine all filters 
         from itertools import combinations
-        q_objs = ['title_q', 'username_q', 'medium_q', 'role_q']
+        from functools import reduce
+        q_objs = [title_q, username_q, medium_q, role_q]
         combinations_list = []
-        for i in range(4, 0, -1) :
+        for i in range(len(q_objs)+1, 0, -1) :
             combinations_list += list(combinations(q_objs, i))
-        print(combinations_list)
-        cmd = ''
-        for i, objs in enumerate(combinations_list) :
-            print(objs)
-            expr = ''
-            expr += ' and '.join(objs)
-            print(expr)
-            if i== 0 :
-                cmd = 'if expr :\n'
-            else :
-                cmd = 'elif expr :\n'
-            cmd += '    expr_inner = None\n'
-            cmd += f'    expr_inner = " | ".join({objs})\n'
-            cmd += '    queryset = queryset.filter(expr_inner)\n'
-            cmd += '    print(expr_inner)\n'
 
-        print(cmd)
-        #ABCD
-        if title_q and username_q and medium_q and role_q :
-            queryset = queryset.filter(title_q | username_q | medium_q | role_q)
-        # ABC, ABD, ACD, BCD, 
-        elif title_q and username_q and medium_q :
-            queryset = queryset.filter(title_q | username_q | medium_q)
-        elif title_q and username_q and role_q :
-            queryset = queryset.filter(title_q | username_q | role_q)
-        elif title_q and medium_q and role_q:
-            queryset = queryset.filter(title_q | medium_q | role_q)
-        elif username_q and medium_q and role_q :
-            queryset = queryset.filter(username_q | medium_q | role_q)
-        # AB, AC, AD, BC, BD, CD
-        elif title_q and username_q :
-            queryset = queryset.filter(title_q | username_q)
-        elif title_q and medium_q :
-            queryset = queryset.filter(title_q | medium_q)
-        elif title_q and role_q :
-            queryset = queryset.filter(title_q | role_q)
-        elif username_q and medium_q :
-            queryset = queryset.filter(username_q | medium_q)
-        elif username_q and role_q :
-            queryset = queryset.filter(username_q | role_q)
-        elif medium_q and role_q :
-            queryset = queryset.filter(medium_q | role_q)
-        # A, B, C, D
-        elif title_q:
-            queryset = queryset.filter(title_q)
-        elif username_q:
-            queryset = queryset.filter(username_q)
-
-        print(queryset)
-        print(queryset.query)
-
+        for combination in combinations_list :
+            if all(combination) :
+                combined_q = reduce(lambda x, y: x | y, combination)
+                queryset = queryset.filter(combined_q).distinct()
+                break
         return queryset
+
+        ####
+        # Following huge code has been replaced by the above scalable code section
+        # This must be removed after the above scalable section has been well tested
+        ####
+        #queryset = Project.objects.all()
+        #ABCD
+        #if title_q and username_q and medium_q and role_q :
+            #print('ABCD')
+            #queryset = queryset.filter(title_q | username_q | medium_q | role_q)
+        # ABC, ABD, ACD, BCD, 
+        #elif title_q and username_q and medium_q :
+            #print('ABC')
+            #queryset = queryset.filter(title_q | username_q | medium_q)
+        #elif title_q and username_q and role_q :
+            #print('ABD')
+            #queryset = queryset.filter(title_q | username_q | role_q)
+        #elif title_q and medium_q and role_q:
+            #print('ACD')
+            #queryset = queryset.filter(title_q | medium_q | role_q)
+        #elif username_q and medium_q and role_q :
+            #print('BCD')
+            #queryset = queryset.filter(username_q | medium_q | role_q)
+        # AB, AC, AD, BC, BD, CD
+        #elif title_q and username_q :
+            #print('AB')
+            #queryset = queryset.filter(title_q | username_q)
+        #elif title_q and medium_q :
+            #print('AC')
+            #queryset = queryset.filter(title_q | medium_q)
+        #elif title_q and role_q :
+            #print('AD')
+            #queryset = queryset.filter(title_q | role_q)
+        #elif username_q and medium_q :
+            #print('BC')
+            #queryset = queryset.filter(username_q | medium_q)
+        #elif username_q and role_q :
+            #print('BD')
+            #queryset = queryset.filter(username_q | role_q)
+        #elif medium_q and role_q :
+            #print('CD')
+            #queryset = queryset.filter(medium_q | role_q)
+        # A, B, C, D
+        #elif title_q:
+            #print('A')
+            #queryset = queryset.filter(title_q)
+        #elif username_q:
+            #print('B')
+            #queryset = queryset.filter(username_q)
+        #elif medium_q:
+            #print('C')
+            #queryset = queryset.filter(medium_q)
+        #elif role_q:
+            #print('D')
+            #queryset = queryset.filter(role_q)
+
+        #print(queryset.query)
+        #print('==========================================')
+        #print()
+        #return queryset
 
 # Following SEARCH function assumes that there are 4 separate search bars (one for each category
 # This assumes that api could be invoked as :-

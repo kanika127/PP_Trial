@@ -2,10 +2,10 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from app1.models import *
  
-class SerializerMyClient(serializers.ModelSerializer):
-    class Meta :
-        model = MyClient
-        fields = ['org_name', 'industry', 'address', 'email']
+# class SerializerMyClient(serializers.ModelSerializer):
+#     class Meta :
+#         model = MyClient
+#         fields = ['org_name', 'industry', 'address', 'email']
 
 class ClientSerializer(serializers.ModelSerializer):
     class Meta :

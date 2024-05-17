@@ -4,6 +4,9 @@ from .models import *
 from .my_serializers.project_role_serializers import *
 from .my_serializers.application_serializers import *
 from .my_serializers.temptesting_serializers import *
+from rest_framework import serializers
+from django.core.validators import RegexValidator
+from app1.models import *
  
 class CreatorRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField()

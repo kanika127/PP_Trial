@@ -3,7 +3,6 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.exceptions import NotFound
 from rest_framework import serializers
 from rest_framework import status
-
 from django.db.models import Q
 from django.http import JsonResponse
 
@@ -39,22 +38,42 @@ from app1.serializers import *
         #return JsonResponse({"message": "Project created."}, status=status.HTTP_200_OK)
 
 class ProjectPagination(LimitOffsetPagination):
-    default_limit = 10
-    max_limit = 10
+    default_limit = 15
+    max_limit = 15
 
 class ProjectListCreateAPIView(ListCreateAPIView):
     queryset = Project.objects.all().prefetch_related('roles') # prefetch_related('roles'):optimizes retrieval of Project instances along with their related Role instances
     pagination_class = ProjectPagination
 
     def get_serializer_class(self):
+        print("in ProjectListCreateAPIView get_serializer_class") ###
         if self.request.method == 'GET':
             ser_class =  ProjectListSerializer
-        else :
+        else:
+            print("ProjectSerializer") ##
+            # print(self.queryset)
             ser_class = ProjectSerializer
         print(ser_class)
         return ser_class
+    
+class ProjectRetrieveUpdateDestroyAPIView(RetrieveUpdateDestroyAPIView):
+    queryset = Project.objects.all().prefetch_related('roles')
+    serializer_class = ProjectSerializer
+    lookup_field = 'id' # by default looks up for 'pk'
 
-class ProjectListByOwnerAPIView(ListAPIView):
+    def __init__(self):
+        # super().__init__(*args, **kwargs)
+        print("init ProjectRetrieveUpdateDestroyAPIView")
+        print(self)
+        print("..")
+
+    def get_queryset(self):
+        print("in ProjectRetrieveUpdateDestroyAPIView:get_queryset")
+        print(Project.objects.all())
+        return Project.objects.all()
+        # return Project.objects.filteHHr(owner=user)
+
+class LiveProjectListByOwnerAPIView(ListAPIView):
     serializer_class = ProjectListSerializer
     pagination_class = ProjectPagination
 
@@ -63,7 +82,20 @@ class ProjectListByOwnerAPIView(ListAPIView):
         if not PassionUser.objects.filter(username=username).exists():
             print('NO SUCH USER')
             #raise NotFound("No such user")
-        return Project.objects.filter(owner__username=username).prefetch_related('roles')
+        ### TODO: project status -> not (completed or deleted)
+        return Project.objects.filter(owner__username=username, project_status=Project.Status.LIVE).prefetch_related('roles')
+        # return Project.objects.filter(owner__username=username, project_status=Project.Status.LIVE).prefetch_related('roles')
+
+class PastProjectListByOwnerAPIView(ListAPIView):
+    serializer_class = ProjectListSerializer
+    pagination_class = ProjectPagination
+
+    def get_queryset(self):
+        username = self.kwargs['username']  # Assuming the URL pattern includes 'owner_id'
+        if not PassionUser.objects.filter(username=username).exists():
+            print('NO SUCH USER')
+            #raise NotFound("No such user")
+        return Project.objects.filter(owner__username=username, project_status=Project.Status.COMPLETE).prefetch_related('roles')
 
 # project details by owner
 class ProjectOwnerView(RetrieveUpdateDestroyAPIView):

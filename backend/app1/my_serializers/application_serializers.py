@@ -84,3 +84,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
                 #Role.objects.create(project=instance, **role_data)
 
         #return instance
+
+class ApplicationListSerializer(serializers.ModelSerializer):
+    # role = Role_ListProject_Serializer(many=False, read_only=True)
+    # applicant = Owner_ListProject_Serializer(many=False, read_only=True) 
+    class Meta : 
+        model = Role
+        fields = [field.name for field in model._meta.fields if field.name!='applicant']

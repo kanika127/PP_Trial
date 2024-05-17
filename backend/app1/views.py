@@ -19,14 +19,15 @@ from twilio import rest
 from twilio.base.exceptions import TwilioRestException
 from django.core.mail import send_mail
 from django.urls import reverse
-from .models import EmailVerificationToken
+# from .models import EmailVerificationToken
 from django.utils.timezone import now, timedelta
 from .serializers import CreatorRegistrationSerializer, ClientRegistrationSerializer
+from .my_serializers.password_reset_serializer import PasswordResetSerializer
 from phonenumber_field.phonenumber import to_python
-
+from django.contrib.auth.hashers import check_password, make_password
 import random
 import datetime
-
+import re ### TODO: remove after adding seroializer for reset_password validator
 from .models import *
 from .forms import CreatorForm, PassionUserProfileForm
 from .serializers import *
@@ -34,6 +35,8 @@ from .my_views.project_views import *
 from .my_views.application_views import *
 # from .my_views.temptesting_views import *
 from django.http import JsonResponse
+import jwt
+from backend.settings import *
 
 # Create your views here.
 
@@ -111,15 +114,14 @@ class PassionViewUser(APIView):
             # user = EmailOrUsernameModelBackend.authenticate(request, username=self.username, password=self.password)
             user = authenticate(request, username=self.username, password=self.password)
             print(user)
+            print(SIMPLE_JWT)
+            print(SIMPLE_JWT.get('SIGNING_KEY'))
             if user is not None:
                 # If credentials are valid, log the user in
-                login(request, user)
-                return Response({"message": "You're logged in."}, status=status.HTTP_200_OK)
-            # user = authenticate(request, email=self.username, password=self.password)
-            # if user is not None:
-            #     # If credentials are valid, log the user in
-            #     login(request, user)
-            #     return Response({"message": "You're logged in.."}, status=status.HTTP_200_OK)
+                login(request, user) ## TODO: Check if required
+                token = jwt.encode({'username': self.username}, SIMPLE_JWT.get('SIGNING_KEY'), algorithm='HS256')
+                return JsonResponse({'token': token, "message": "You're logged in."}, status=status.HTTP_200_OK)
+                # return Response({"message": "You're logged in."}, status=status.HTTP_200_OK)
 
             print("Invalid login credentials.") ##
             try:
@@ -129,13 +131,59 @@ class PassionViewUser(APIView):
                     raise ValidationError('Invalid username.')    
             except ValidationError as e:
                 return JsonResponse({'error': str(e.message)}, status=400)
+
         elif action == "reset_pass":
+            # serializer = PasswordResetSerializer(data=request.data)
+            # print("view action reset_pass request.data", request.data)
+            # data = {"username": 'kan', 'curr_password': 'kani', 'new_password': 'Kanika@123'}
+            # serializer = PasswordResetSerializer(data=request.data)
+            # # serializer = PasswordResetSerializer()
+            # print("serializer.data", serializer.data)
+            # print("hm")
+            # try:
+            #     data = serializer.validate(request.data)
+            #     print("Manual validation success:", data)
+            # except serializers.ValidationError as e:
+            #     print("Manual validation error:", str(e))
+            # try:
+            #     serializer.is_valid()
+            #     # serializer.is_valid(raise_exception=True)
+            #     print("hi")
+            #     data = serializer.validated_data
+            #     application = serializer.save()
+            #     serializer.create(serializer.validated_data)
+            #     # new_password = serializer.validated_data.get('new_password')
+            #     return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
+            #     # else:
+            #     #     print("ouch")
+            #     #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            # except Exception as e:
+            #     print(e)
+            #     print("failed")
+            #     print("Validation failed:", serializer.errors)
+
+            print(request.data)
             self.username = request.data.get('username')
-            user = BaseModelUser.objects.get(username=self.username)
-            self.password = request.data.get('password')
-            user.set_password(self.password)
-            print(self.username, self.password)
+            curr_password = request.data.get('curr_password')
+            new_password = request.data.get('new_password')
+            try:
+                user = BaseModelUser.objects.get(username=self.username)
+            except User.DoesNotExist:
+                print("user not present") ###
+                return JsonResponse({'error': "user not present"}, status=400)
+            else:
+                if check_password(curr_password, user.password):                
+                    print("user present") ###
+                else:
+                    print("invalid current password")
+                    return JsonResponse({'error': "invalid current password"}, status=400)
+            pattern = re.compile("^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$")
+            if pattern.match(new_password) is None:
+                print("Password must contain at least one uppercase letter, one lowercase letter, one digit, and one special character and must be atleast 8 characters long.")
+                return JsonResponse({'error': "invalid current password"}, status=400)
+            user.set_password(new_password)
             user.save()
+            print("Password changed.") ###
             return Response({"message": "Your password is updated."}, status=status.HTTP_200_OK)
 
         elif action == "add_creator_field":
@@ -200,18 +248,26 @@ class PassionViewUser(APIView):
                 creator = None
             if creator:
                 # print("Creator found:", creator)
+                user_sample_work = [request.data.get('sample_work_'+str(i)) for i in range(1, 4)]
+                # self.add_user_sample_work(creator, user_sample_work)
                 for data in request.data.get('sample_work'):
                     sample_work = UserSampleWorkTable.objects.create_user(
                         text=data["text"],
+                        description=data["description"],
+                        content_type=data["content_type"],
+                        content_file=data["content_file"],
                         file=data["file"],
-                        user=creator,  
+                        cover_picture=data["cover_picture"],
+                        # user=client,  
                     )
                     sample_work.save() 
 
                 creator.bio = request.data.get('bio')
                 creator.field = request.data.get('field')
+                creator.other_field = request.data.get('other_field')
                 creator.pronoun = request.data.get('pronoun')
                 creator.star_rating = request.data.get('star_rating')
+                creator.skills = request.data.get('skills')
                 creator.save()
                 message = "Creator's profile updated successfully."
                 # print("") ##
@@ -231,16 +287,23 @@ class PassionViewUser(APIView):
                 client = None
             if client:
                 # print("Client found:", client)
+                # self.add_user_sample_work(client, user_sample_work)
                 for data in request.data.get('sample_work'):
                     sample_work = UserSampleWorkTable.objects.create_user(
                         text=data["text"],
+                        description=data["description"],
+                        content_type=data["content_type"],
+                        content_file=data["content_file"],
                         file=data["file"],
-                        user=client,  
+                        cover_picture=data["cover_picture"],
+                        # user=client,  
                     )
                     sample_work.save() 
 
+                client.bio = request.data.get('bio')
                 client.org_name = request.data.get('org_name')
                 client.industry = request.data.get('industry')
+                client.other_industry = request.data.get('other_industry')
                 client.save()
                 message = "Client's profile updated successfully."
                 # print("") ##
@@ -258,9 +321,22 @@ class PassionViewUser(APIView):
             self.is_creator = False
             return Response({"message": "Set as client."}, status=status.HTTP_200_OK)
 
-        elif action == "add_creator_data":
+    def add_user_sample_work(user, user_sample_work):
+        keys = ['sample_work_'+str(i) for i in range(1,4)]
+        for sample_work in user_sample_work:
+            sample_work = UserSampleWorkTable.objects.create_user(
+                text=sample_work["text"],
+                description=sample_work["description"],
+                content_type=sample_work["content_type"],
+                content_file=sample_work["content_file"],
+                file=sample_work["file"],
+                cover_picture=sample_work["cover_picture"],
+                # user=client,  
+            )
+            sample_work.save() 
+            # user.
 
-            return Response({"message": "Creator profile updated."}, status=status.HTTP_200_OK)
+
 
 
 class UserRegistrationView(APIView):
@@ -427,7 +503,7 @@ class EmailVerifyView(APIView):
                     username=user_data["username"],
                     email=user_data["email"],
                     mobile=user_data["mobile"],
-                    password=user_data["password"],
+                    # password=user_data["password"],
                     first_name=user_data["first_name"],
                     last_name=user_data["last_name"]
                 ) 
@@ -439,7 +515,7 @@ class EmailVerifyView(APIView):
                     username=user_data["username"],
                     email=user_data["email"],
                     mobile=user_data["mobile"],
-                    password=user_data["password"],
+                    # password=user_data["password"],
                     first_name=user_data["first_name"],
                     last_name=user_data["last_name"],
                     org_name=user_data["organization_name"]
@@ -491,6 +567,7 @@ class EmailVerifyView(APIView):
         except EmailVerificationToken.DoesNotExist:
             return Response({"message": "Invalid or expired token."}, status=400)
 
+'''
 class UserApplicationsAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -530,8 +607,6 @@ class UserPastProjectsView(APIView):
         serializer = ProjectSerializer(past_projects, many=True)
         # Return the serialized data
         return Response(serializer.data)
-
-
 
 class ProjectBoardDisplay(APIView):
     def get_dynamic_filter_options():
@@ -597,27 +672,4 @@ class ProjectBoardDisplay(APIView):
             filter_options = self.get_dynamic_filter_options()
             
             return render(request, 'project_list.html', {'projects': filtered_projects, 'filter_options': filter_options})
-
-
-
-
-
-
-
-### TODO: Check the below
-# @login_required
-# def add_creator_profile(request):
-#     try:
-#         creator_profile = request.user.creator
-#     except Creator.DoesNotExist:
-#         creator_profile = Creator(user=request.user)
-
-#     if request.method == 'POST':
-#         form = CreatorForm(request.POST, instance=creator_profile)
-#         if form.is_valid():
-#             form.save()
-#             return redirect('profile_updated_successfully')
-#     else:
-#         form = CreatorForm(instance=creator_profile)
-
-#     return render(request, 'update_creator_profile.html', {'form': form})
+'''

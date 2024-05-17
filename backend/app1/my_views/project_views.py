@@ -12,20 +12,23 @@ from app1.models import Project, ROLE_CHOICES
 from app1.serializers import *
 
 class ProjectPagination(LimitOffsetPagination):
-    default_limit = 10
-    max_limit = 10
+    default_limit = 15
+    max_limit = 15
 
 class ProjectListCreateAPIView(ListCreateAPIView):
     queryset = Project.objects.all().prefetch_related('roles') # prefetch_related('roles'):optimizes retrieval of Project instances along with their related Role instances
     pagination_class = ProjectPagination
 
     def get_serializer_class(self):
+        print("in ProjectListCreateAPIView get_serializer_class") ###
         if self.request.method == 'GET':
             ser_class =  ProjectListSerializer
-        else :
+        else:
+            print("ProjectSerializer") ##
+            # print(self.queryset)
             ser_class = ProjectSerializer
         return ser_class
-
+    
     def get_queryset(self):
         order_by_param = self.request.query_params.get('order_by')
         if not order_by_param or order_by_param not in [field.name for field in Project._meta.fields] :
@@ -115,6 +118,33 @@ class ProjectListByOwnerAPIView(ListAPIView):
 
         queryset = Project.objects.filter(owner__username=username).prefetch_related('roles').order_by(order_by_param)
         return queryset
+        ### TODO: project status -> not (completed or deleted)
+        return Project.objects.filter(owner__username=username, project_status=Project.Status.LIVE).prefetch_related('roles')
+        # return Project.objects.filter(owner__username=username, project_status=Project.Status.LIVE).prefetch_related('roles')
+
+class LiveProjectListByOwnerAPIView(ListAPIView):
+    serializer_class = ProjectListSerializer
+    pagination_class = ProjectPagination
+
+    def get_queryset(self):
+        username = self.kwargs['username']  # Assuming the URL pattern includes 'owner_id'
+        if not PassionUser.objects.filter(username=username).exists():
+            print('NO SUCH USER')
+            #raise NotFound("No such user")
+        ### TODO: project status -> not (completed or deleted)
+        return Project.objects.filter(owner__username=username, project_status=Project.Status.LIVE).prefetch_related('roles')
+        # return Project.objects.filter(owner__username=username, project_status=Project.Status.LIVE).prefetch_related('roles')
+
+class PastProjectListByOwnerAPIView(ListAPIView):
+    serializer_class = ProjectListSerializer
+    pagination_class = ProjectPagination
+
+    def get_queryset(self):
+        username = self.kwargs['username']  # Assuming the URL pattern includes 'owner_id'
+        if not PassionUser.objects.filter(username=username).exists():
+            print('NO SUCH USER')
+            #raise NotFound("No such user")
+        return Project.objects.filter(owner__username=username, project_status=Project.Status.COMPLETE).prefetch_related('roles')
 
 # project details by owner
 class ProjectOwnerView(RetrieveUpdateDestroyAPIView):

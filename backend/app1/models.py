@@ -66,7 +66,7 @@ class MyUserManager(BaseUserManager, PolymorphicManager):
         my_user.save()
         return my_user
 
-    def create_superuser(self, username,  password=None, **extra_fields):
+    def create_superuser(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
 
@@ -100,6 +100,7 @@ class SuperUser(BaseUser) :
 
     class Meta :
         verbose_name = 'Super User'
+
     def __str__(self):
         return self.username
 
@@ -112,6 +113,7 @@ class PassionUser(BaseUser) :
 
     def __str__(self):
         return self.username
+    
     class Meta :
         verbose_name = 'Passion User'
         verbose_name_plural = 'Passion Users'
@@ -191,7 +193,7 @@ class Project(models.Model) :
     medium = models.CharField(max_length=100, blank=False, default=None )
     approx_completion_date = models.DateField(blank=False, default=None )
     description = models.CharField(max_length=2000, blank=False, default=None )
-    sample_wrk = models.ForeignKey(ProjectSampleWorkTable, on_delete=models.CASCADE, related_name='project_sample_work', blank=False, default=None )
+    sample_wrk = models.ForeignKey(ProjectSampleWorkTable, on_delete=models.CASCADE, related_name='project_sample_work', blank=False, default=None ) ###TODO: optional, but text is required if link is present.
     project_status = models.CharField(max_length=3, choices=Status.choices, blank=False, default=Status.PENDING)
 
     class Meta :
@@ -259,7 +261,7 @@ class Role(models.Model) :
     question_1 = models.ForeignKey(RoleQuestion, on_delete=models.CASCADE, related_name='role_question_1', null=True, default=None)
     question_2 = models.ForeignKey(RoleQuestion, on_delete=models.CASCADE, related_name='role_question_2', null=True, default=None)
     question_3 = models.ForeignKey(RoleQuestion, on_delete=models.CASCADE, related_name='role_question_3', null=True, default=None)
-    
+    prospects = models.BooleanField(default = False) ### added by nix
 
     class Meta :
         unique_together = ('project', 'role_type')
@@ -367,4 +369,3 @@ class Application(models.Model):
         unique_together = ('applicant', 'role')
 
     def __str__(self) : return f'Application by {self.applicant.username} for role -> {self.role.role_type}'
-

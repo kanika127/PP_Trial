@@ -78,7 +78,8 @@ class ProjectListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Project
-        fields = ('id', 'title', 'medium', 'owner', 'approx_completion_date', 'roles')
+        # fields = ('id', 'title', 'medium', 'owner', 'approx_completion_date', 'roles')
+        fields = ('id', 'title', 'medium', 'approx_completion_date', 'roles') ###TODO: check if custon field can be sent from here
 
 class ProjectDetailOwnerSerializer(serializers.ModelSerializer):
     roles = Role_ProjectDetailOwner_Serializer(many=True, read_only=True)
@@ -125,6 +126,9 @@ class ProjectSerializer(serializers.ModelSerializer):
 
         roles_data = data.get('roles')
         for role in roles_data :
+            # if role['role_count'] < 1 or role['role_count'] > 10: 
+                # print("://")
+                # raise serializers.ValidationError({'role_count' : "'role_count' should be between 1 and 10 inclusive."})
             if role['role_type'] == 'O' and not role.get('other_role_type'):
                 raise serializers.ValidationError({'role_type' : "Please provide 'other_role_type' for roles where 'role_type' is 'other'."})
 
@@ -169,24 +173,40 @@ class ProjectSerializer(serializers.ModelSerializer):
             role = Role.objects.create(project=project, question_1=q1, question_2=q2, question_3=q3, **role_data)
 
         return project
+    
+    def update(self, instance, validated_data):
+        print("instance: ", instance)
+        return instance
+        # instance.title = validated_data.get('title', instance.title)
+        # instance.medium = validated_data.get('medium', instance.medium)
+        # instance.approx_completion_date = validated_data.get('approx_completion_date', instance.approx_completion_date)
+        # instance.description = validated_data.get('description', instance.description)
+        # instance.sample_wrk = validated_data.get('sample_wrk', instance.sample_wrk)
+        # instance.project_status = validated_data.get('project_status', instance.project_status)
+        # instance.save()
+        # return instance
 
-    #def update(self, instance, validated_data):
-        #roles_data = validated_data.pop('roles', [])
-        ## Update the project fields
-        #for attr, value in validated_data.items():
-            #setattr(instance, attr, value)
-        #instance.save()
+        print("0")
+        roles_data = validated_data.pop('roles', [])
+        # Update the project fields
+        print("1")
+         
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        print("2")
 
         ## Update or create roles
-        #for role_data in roles_data:
-            #role_id = role_data.get('id', None)
-            #if role_id:
-                #role = Role.objects.get(id=role_id, project=instance)
-                #for key, value in role_data.items():
-                    #setattr(role, key, value)
-                #role.save()
-            #else:
-                #Role.objects.create(project=instance, **role_data)
+        for role_data in roles_data:
+            role_id = role_data.get('id', None)
+            if role_id:
+                role = Role.objects.get(id=role_id, project=instance)
+                for key, value in role_data.items():
+                    setattr(role, key, value)
+                role.save()
+            else:
+                Role.objects.create(project=instance, **role_data)
+            print("3")
 
         #return instance
 

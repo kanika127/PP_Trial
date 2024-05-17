@@ -3,7 +3,6 @@ from django.core.validators import RegexValidator
 from .models import *
 from .my_serializers.project_role_serializers import *
 from .my_serializers.application_serializers import *
-from .my_serializers.temptesting_serializers import *
  
 class CreatorRegistrationSerializer(serializers.Serializer):
     first_name = serializers.CharField()

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.core.validators import RegexValidator
+from django.db.utils import IntegrityError
 from app1.models import *
  
 class RoleQuestionSerializer(serializers.ModelSerializer):
@@ -132,6 +133,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         # Remove the username from validated data and use it to find the BaseUser instance
+        if 'project_status' in validated_data :
+            validated_data.pop('project_status')
         username = validated_data.pop('username')
         validated_data.pop('owner')
         roles_data = validated_data.pop('roles')
@@ -141,10 +144,14 @@ class ProjectSerializer(serializers.ModelSerializer):
         passion_user = PassionUser.objects.get(username=user)
 
         # Create the Project instance
-        project = Project.objects.create(owner=passion_user, sample_wrk=samplewrk, **validated_data)
-        print('project created')
-        print('======================')
-        print()
+        print("BEF PROJ CREATE")
+        try :
+            project = Project.objects.create(owner=passion_user, sample_wrk=samplewrk, **validated_data)
+            print('project created')
+            print('======================')
+            print()
+        except IntegrityError:
+            raise serializers.ValidationError({'detail': 'Project with this owner and title already exists.'})
 
         # print(roles_data)
         for role_data in roles_data :
@@ -182,3 +189,50 @@ class ProjectSerializer(serializers.ModelSerializer):
                 #Role.objects.create(project=instance, **role_data)
 
         #return instance
+
+class Role_FilterProject_Serializer(serializers.ModelSerializer):
+    class Meta : 
+        model = Role
+        fields = ('role_type', 'collab_type', 'exec_mode')
+
+class FilterProjectSerializer(serializers.ModelSerializer) :
+    class Meta:
+        model = Project
+        fields = ['approx_completion_date']
+
+class CreateProjectFilterSerializer(serializers.ModelSerializer) :
+    # Filter based on following attributes
+    # Role - multi-select ---> role_type in Role
+    # Paid/Unpaid/Collaboration - multi-select ---> collab_type in Role
+    # Completion Date  - date range ---> approx_completion_date in Project
+    # In Person / Virtual - multi-select ---> exec_mode in Role
+
+    project = ProjectSerializer(source='foreign_key_to_project', read_only=True)
+
+    class Meta :
+        model = Role
+        fields = ('role_type', 'collab_type', 'exec_mode', 'project')
+
+    def to_representation(self, instance):
+        # Get the serialized data using the default representation
+        data = super().to_representation(instance)
+        project_instance = Project.objects.get(pk=instance["project"])  #pk=78)
+        project_data = FilterProjectSerializer(project_instance).data  # Serialize ModelA instance separately
+        data['project'] = project_data  # Include ModelA data in the serialized representation
+
+        # Group the values of intoch filter field to respective lists
+        result = {}
+        print('=========================================')
+        print(f'{instance=}')
+        print(f'{data=}')
+        for key, value in data.items():
+            if key not in result:
+                result[key] = [value]
+            else:
+                result[key].append(value)
+
+        print(f'{result=}')
+        print('=========================================')
+        print('=========================================')
+        print()
+        return result

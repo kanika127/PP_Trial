@@ -3,9 +3,11 @@ import requests
 import datetime as dt
 
 url = 'http://127.0.0.1:8000/app1/projects/'
+#url += '?order_by=approx_completion_date'
+url += '?order_by=titlee'
+
 while url :
     r = requests.get(url)
-    #r = requests.post('http://localhost:8000/app1/hello/')
      
     print (type(r))
     print (r)

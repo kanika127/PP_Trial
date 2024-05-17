@@ -6,6 +6,10 @@ terms = input('Enter search terms/(press enter for None) :: ').replace(' ', '%20
 
 url = 'http://127.0.0.1:8000/app1/projects/search/?'
 if terms : url += f'terms={terms}&'
+
+#url += 'order_by=approx_completion_date'
+url += 'order_by=title'
+
 print(url)
 
 while url :

@@ -31,6 +31,29 @@ ALLOWED_HOSTS = ["127.0.0.1","localhost"]
 
 CORS_ORIGIN_ALLOW_ALL=True
 
+# settings.py
+
+#LOGGING = {
+    #'version': 1,
+    #'disable_existing_loggers': False,
+    #'handlers': {
+        ## Define a console handler to print log messages to the console
+        #'console': {
+            #'level': 'DEBUG',  # Set the logging level to DEBUG to capture all messages
+            #'class': 'logging.StreamHandler',
+        #},
+    #},
+    #'loggers': {
+        ## Configure the logger for Django database queries
+        #'django.db.backends': {
+            #'handlers': ['console'],
+            #'level': 'DEBUG',
+            #'propagate': False,  # Prevent propagation to avoid double logging
+        #},
+    #},
+#}
+
+
 # Application definition
 
 INSTALLED_APPS = [

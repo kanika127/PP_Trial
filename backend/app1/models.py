@@ -6,13 +6,14 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager, User
 from polymorphic.models import PolymorphicModel, PolymorphicManager
 from django.contrib.postgres.fields import ArrayField
 from django.conf import settings
-import uuid
-# from django.contrib.postgres.fields import JSONField
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import get_user_model
+from django.dispatch import receiver
+from django.db.models.signals import post_delete
 
 from phonenumber_field.modelfields import PhoneNumberField
+import uuid
 
 from abc import ABC, ABCMeta
 import os
@@ -183,6 +184,7 @@ class Project(models.Model) :
         LIVE = 'L', 'Live'
         COMPLETE = 'C', 'Complete'
         PAUSE = 'PS', 'Pause'
+        DELETED = 'D', 'Deleted'
 
     owner = models.ForeignKey(PassionUser, on_delete=models.CASCADE, related_name='projects', blank=False, default=None )
     title = models.CharField(max_length=100, blank=False, default=None )
@@ -241,9 +243,10 @@ class Role(models.Model) :
         COLLABORATION = 'C', 'Collaboration'
     
     class ExecModes(models.TextChoices) :
-        IN_PERSON = 'P', 'in-person'
-        VIRTUAL = 'V', 'virtual'
+        IN_PERSON = 'P', 'In-person'
+        VIRTUAL = 'V', 'Virtual'
     
+    print(CollabTypes.PAID)
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='roles', blank=False, default=None)
     role_type = models.CharField(max_length=5, choices=ROLE_CHOICES, default=ROLE_CHOICES[0][0])
     other_role_type = models.CharField(max_length=100, blank=True, null=True) # extra field to save data if 'status' is 'other'
@@ -285,6 +288,16 @@ class Role(models.Model) :
         super().save(*args, **kwargs)
 
     def __str__(self) : return f'{self.role_type=}, {self.project=}'
+
+@receiver(post_delete, sender=Role)
+def delete_rolequestion(sender, instance, **kwargs):
+    print('POST delete for ROLE')
+    if instance.question_1 :
+        instance.question_1.delete()
+    if instance.question_2 :
+        instance.question_2.delete()
+    if instance.question_3 :
+        instance.question_3.delete()
 
 class ApplicationQuestion(models.Model) :
     def validate_file_extension(value):
@@ -355,33 +368,3 @@ class Application(models.Model):
 
     def __str__(self) : return f'Application by {self.applicant.username} for role -> {self.role.role_type}'
 
-class MyClient(models.Model) :
-    org_name = models.CharField(max_length=50, default="")
-    industry = models.CharField(max_length=50, default="")
-    address = models.CharField(max_length=50, default="")
-    email = models.EmailField(max_length=50) #, validators=[EmailValidator('inv email')]) NOT REQD ---> JUST DO 'full_clean' before model_obj.save()
-    mobile = PhoneNumberField(null=False, blank=False)
-
-    class Status(models.TextChoices) :
-        PENDING = 'P', 'Pending'
-        APPROVED = 'A', 'Approved'
-        REJECTED = 'R', 'Rejected'
-        OTHER = 'O', 'Other'
-        #choices = models.ChoicesType(('P', 'Pending'), ('A', 'Approved'), ('R', 'Rejected'), ('O', 'Other'))
-    application_status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
-    other_status = models.CharField(max_length=100, blank=True, null=True) # extra fld to save data if 'status' is 'other'
-    
-    def save(self, *args, **kwargs) :
-        if self.application_status != MyClient.Status.OTHER:
-            self.other_status = ''  # Clear the other_status if 'Other' is not selected
-        super().save(*args, **kwargs)
-
-class Place(models.Model):
-    name = models.CharField(max_length=50)
-    address = models.CharField(max_length=80)
-    class Meta :
-        abstract = True
-
-class Restaurant(Place):
-    serves_hot_dogs = models.BooleanField(default=False)
-    serves_pizza = models.BooleanField(default=False)

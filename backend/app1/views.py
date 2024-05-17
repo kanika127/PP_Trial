@@ -32,7 +32,7 @@ from .forms import CreatorForm, PassionUserProfileForm
 from .serializers import *
 from .my_views.project_views import *
 from .my_views.application_views import *
-from .my_views.temptesting_views import *
+# from .my_views.temptesting_views import *
 from django.http import JsonResponse
 
 # Create your views here.

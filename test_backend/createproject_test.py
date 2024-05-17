@@ -3,26 +3,25 @@ import requests
 import datetime as dt
 
 data = {
-    "username": "Kanika",
-    "title": "Kanika title",
-    "medium": "Kanika  medium",
+    "username": "Krish",
+    "title": "PRADEEP 1 TITLE",
+    "medium": "PRADEEP  1 MEDIUM",
     "approx_completion_date" : dt.datetime.today().strftime('%Y-%m-%d'),
-    "description" : "Kanika.100 decription",
+    "description" : "PRADEEP 1 .200 DECRIPTION",
     "roles" : [
-        {'role_type':'M', 'role_count':2, 'collab_type':'U', 'budget':15, 'exec_mode':'V',
-            "question_1" : {'prompt':'my q1', 'guidelines':'guide to q1', 'content_type':'I'},
+        {'role_type':'DJ', 'role_count':2, 'collab_type':'U', 'budget':25, 'exec_mode':'V',
+            "question_1" : {'prompt':'my q1', 'guidelines':'guide to q2', 'content_type':'I'},
             "question_2" : {'prompt':'my q2', 'guidelines':'guide to q2'},
             "question_3" : {'prompt':'my q2', 'guidelines':'guide to q2'},
-            "question_4" : {'prompt':'my q2', 'guidelines':'guide to q2'},
         },
-        {'role_type':'WR', 'role_count':2, 'collab_type':'U', 'budget':15, 'exec_mode':'V',
+        {'role_type':'WR', 'role_count':2, 'collab_type':'U', 'budget':25, 'exec_mode':'V',
             "question_1" : {}, "question_2" : {}, "question_3" : {}},
         {'role_count':5, 'collab_type':'P', 'budget':5, 'exec_mode':'P',
             "question_1" : {}, "question_2" : {}, "question_3" : {}},
         ],
-    "project_status" : "PS",
+    # "project_status" : "PS",
     "sample_wrk": {
-        "text": "this is description of sample work for Kanika #12abcd",
+        "text": "THIS IS DESCRIPTION OF SAMPLE WORK FOR PRADEEP 1 #22abcd",
         "link": "http://medium.com"
     },
 }
